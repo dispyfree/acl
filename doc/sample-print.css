@@ -1,0 +1,15 @@
+/* PHPXref style sheet used for print media */
+.listing {
+    border-left: none;
+    margin: 0px;
+}
+.viewlinks {
+    display: none;
+}
+.searchbox {
+    display: none;
+}
+.navlinks {
+    display: none;
+}
+

@@ -1,0 +1,50 @@
+<?php
+
+class DefaultController extends Controller
+{
+	public function actionIndex()
+	{
+		$this->render('index');
+	}
+        
+        
+        public function actionTest(){
+            /*$group = new RGroup();
+            $group->alias = 'bla';
+            $group->save();*/
+            
+            /*$user = new RGroup();
+            $user->alias = 'user';
+            
+            $obj = new CGroup();
+            $obj->alias = 'pic';
+            $obj->save();
+            
+            $group = RGroup::model()->find('alias = :alias', array(':alias' => 'bla'));
+            $group->grant($obj, '*');
+            */
+            
+            /*$cgroup = new CGroup();
+            $cgroup->alias = 'picGroup';
+            $cgroup->save();
+            */
+            $bla = CGroup::model()->find('alias = :alias', array(':alias' => 'pic'));
+            if($bla)
+                $bla->delete();
+            
+            $bla = new CGroup();
+            $bla->alias = 'restricted';
+            $bla->save();
+            
+            $pic = CGroup::model()->find('alias = :alias', array(':alias' => 'pic'));
+            $cgroup = CGroup::model()->find('alias = :alias', array(':alias' => 'picGroup'));
+            
+            $user =RGroup::model()->find('alias = :alias', array(':alias' => 'user'));
+            $group =RGroup::model()->find('alias = :alias', array(':alias' => 'bla'));
+            
+            
+            echo (integer)$user->may('pic', 'read');
+            echo (integer)$group->may('pic', 'read');
+            echo $user->may('picGroup', 'read');
+        }
+}
