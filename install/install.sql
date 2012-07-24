@@ -1,16 +1,4 @@
--- phpMyAdmin SQL Dump
--- version 3.4.5
--- http://www.phpmyadmin.net
---
 
-SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
-SET time_zone = "+00:00";
-
-/*!40101 SET NAMES utf8 */;
-
---
--- Datenbank: `img`
---
 
 -- --------------------------------------------------------
 
@@ -43,6 +31,7 @@ CREATE TABLE IF NOT EXISTS `tbl_aco_collection` (
   KEY `alias` (`alias`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
+
 -- --------------------------------------------------------
 
 --
@@ -56,6 +45,17 @@ CREATE TABLE IF NOT EXISTS `tbl_action` (
   PRIMARY KEY (`id`),
   KEY `name` (`name`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+--
+-- Daten für Tabelle `tbl_action`
+--
+
+INSERT INTO `tbl_action` (`id`, `name`, `created`) VALUES
+(5, 'create', 0),
+(6, 'read', 0),
+(7, 'update', 0),
+(8, 'delete', 0),
+(9, 'grant', 0);
 
 -- --------------------------------------------------------
 
@@ -71,6 +71,10 @@ CREATE TABLE IF NOT EXISTS `tbl_aro` (
   KEY `aco_collection_id` (`collection_id`),
   KEY `path` (`path`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+--
+-- Daten für Tabelle `tbl_aro`
+--
 
 -- --------------------------------------------------------
 
@@ -101,15 +105,13 @@ CREATE TABLE IF NOT EXISTS `tbl_permission` (
   `aco_path` varchar(11) NOT NULL,
   `aro_path` varchar(11) NOT NULL,
   `action_id` int(11) NOT NULL,
+  `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `aco_id` (`aco_id`,`aro_id`,`aco_path`,`aro_path`),
-  KEY `action_id` (`action_id`)
+  KEY `action_id` (`action_id`),
+  KEY `created` (`created`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
-INSERT INTO `tbl_action` (`id`, `name`, `created`) VALUES
-(1, 'create', 0),
-(2, 'read', 0),
-(3, 'update', 0),
-(4, 'delete', 0),
-(5, 'grant', 0);
-
+--
+-- Daten für Tabelle `tbl_permission`
+--
