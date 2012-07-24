@@ -7,48 +7,48 @@ class DefaultController extends Controller
 		$this->render('index');
 	}
         
-        
-       /* public function actionTest(){
+        public function actionTest(){
             
-            $aliases = array('a1', 'a2');
+           $files = File::model()->with('parent')->findAll();
             
-            foreach($aliases as $alias){
-                $user =RGroup::model()->find('alias = :alias', array(':alias' => $alias));
-                $user->delete();
+           return true;
+            
+            $aliases = array(
+                'RGroup' => array('a1', 'a2'),
+                'CGroup' => array('b1', 'b2')
+             );
+            
+            foreach($aliases as $class => $aliase){
+                foreach($aliase as $alias){
+                    $obj =$class::model()->find('alias = :alias', array(':alias' => $alias));
+                    if($obj)
+                        $obj->delete();
+                }
             }
             
             $a1 = new RGroup();
             $a1->alias = 'a1';
+            $a1->save();
             
             
             $a2 = new RGroup();
             $a2->alias = 'a2';
+            $a2->save();
             
+            $b1 = new CGroup();
+            $b1->alias = 'b1';
+            $b1->save();
             
-            $a2->join('a1');
+            $b2 = new CGroup();
+            $b2->alias = 'b2';
+            $b2->save();
             
-            echo $a2->is('a1') ? 'is a1' : 'worlds\'s end is near';
+            $a1->grant($b1, '*');
             
-            return true;
-            
-            $bla = CGroup::model()->find('alias = :alias', array(':alias' => 'pic'));
-            if($bla)
-                $bla->delete();
-            
-            $bla = new CGroup();
-            $bla->alias = 'restricted';
-            $bla->save();
-            
-            $pic = CGroup::model()->find('alias = :alias', array(':alias' => 'pic'));
-            $cgroup = CGroup::model()->find('alias = :alias', array(':alias' => 'picGroup'));
-            
-            $user =RGroup::model()->find('alias = :alias', array(':alias' => 'user'));
-            $group =RGroup::model()->find('alias = :alias', array(':alias' => 'bla'));
-            
-            
-            echo (integer)$user->may('pic', 'read');
-            echo (integer)$group->may('pic', 'read');
-            echo $user->may('picGroup', 'read');
+            if($a2->is('a1'))
+                    echo "double-sided business-rules in action!";
+            else
+                    echo "Access denied";
         }
-       */
+       
 }

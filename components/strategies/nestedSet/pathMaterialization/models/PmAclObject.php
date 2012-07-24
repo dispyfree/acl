@@ -9,7 +9,7 @@
  * @license LGPLv2
  * @package acl.strategies.nestedSet.pathMaterialiization
  */
-class PmAclObject extends AclObject{
+abstract class PmAclObject extends AclObject{
     
     
     /**
@@ -79,22 +79,38 @@ class PmAclObject extends AclObject{
     }
     
      /**
+     * $dir = 'asc':
      * Builds a single SQL-statement comprising all given positions and their parents
      * This SQL-statement will match all those rows being located above the given positions including themselves
+      * 
+      * $dir = 'desc'
+      * The same, but with all the positions located below the given positions or 
+      * equal to them.
      * @param array $positions All positions to include in our statement
      * @param string $type aco/aro
      * @param string $table the table comprising the map between objects and permissions
+     * @param string $fieldPostfix  the postfix of the field (default: "_path" (suitable for the fields in the permission-table)
      * @return string the finished SQL-statement
      */
-    public function addPositionCheck($positions, $type, $table = 't'){
+    public function addPositionCheck($positions, $type, $table = 't', $dir = 'asc', $fieldPostfix = '_path'){
         //Positions == paths in this case
         $preparedConditions = ' ( ';
+        
+        //The order is swapped depending on whether it's asc or desc directed
+        $query = $dir == 'asc'?
+            " '{position}' REGEXP CONCAT('^', {table}.{type}_path )" :
+            " CONCAT('^', {table}.{type}{postfix} ) REGEXP '{position}'";
         
         foreach($positions as $key =>$position){
             if($key > 0)
                 $preparedConditions .= ' OR ';
-            $preparedConditions .= sprintf( " ( '%s' REGEXP CONCAT('^', %s.%s_path ))",
-                    $position, $table, $type);
+            $preparedConditions .= " ( ".Util::rep($query, array(
+               '{position}' => $position,
+               '{table}'    => $table,
+               '{type}'     => $type,
+               '{postfix}'  => $fieldPostfix
+            ))
+            ." ) ";
         }
         
         $preparedConditions .= ' ) ';
@@ -228,10 +244,16 @@ class PmAclObject extends AclObject{
      /**
       * Joins the given object (now called: group)
       * @param mixed $obj
+      * @param boolean  $byPassCheck whether to bypass the permission-check
       * @return boolean
       */
-     public function join($obj){
+     public function join($obj, $byPassCheck = false){
          parent::beforeJoin($obj);
+         
+         $obj = AclObject::loadObjectStatic($obj, $this->getType());
+         
+         if(!$byPassCheck)
+            $this->checkRelationChange('join', $obj);
          
          //Get all nodes of the object
          $objNodes = $obj->getNodes();
@@ -253,11 +275,17 @@ class PmAclObject extends AclObject{
      
      /**
       * Leaves the given group
-      * @param mixed $obj
+      * @param mixed    $obj
+      * @param boolean  $byPassCheck whether to bypass the permission-check
       * @return boolean
       */
-     public function leave($obj){
+     public function leave($obj, $byPassCheck = false){
          parent::beforeLeave($obj);
+         
+         $obj = AclObject::loadObjectStatic($obj, $this->getType());
+          
+         if(!$byPassCheck)
+            $this->checkRelationChange('leave', $obj);
          
          //Get all nodes of the object
          $paths = $obj->getPaths();
@@ -285,6 +313,43 @@ class PmAclObject extends AclObject{
          }
      }
      
+    /**
+     * This function checks if the current aro-object may let this object join
+     * or leave the given object
+     * If not, it throws an exception: otherwise it returns true
+     * @throws RuntimeException
+     * 
+     * @param   string  $type   either "join" or "leave"
+     * @param   mixed   $obj    the object to join/leave
+     * @return  boolean true if succeeded
+     */
+    protected function checkRelationChange($type, $obj){
+        
+        if(!in_array($type, array('join', 'leave')))
+                throw new RuntimeException('Invalid relation-change type');
+        $ltype  = $type;
+        $type   = ucfirst($type);
+        
+        //The object who wants to perform this change
+        $aro = RestrictedActiveRecord::getUser();
+        
+        //Check if the change is restricted
+        $generalConfigEntry     = 'enableRelationChangeRestriction';
+        
+        $enableCheck = Strategy::get($generalConfigEntry);
+        
+        if($enableCheck){ 
+            //This aro may generally not do this
+            if(!$aro->may($obj, $ltype))
+                throw new RuntimeException(Yii::t('app', 
+                        'You are not permitted to let this object {type} {obj}',
+                        array('{type}' => $type,
+                              '{obj}' => get_class($this).'::'.$this->id)));
+        }
+        
+        return true;
+    }
+     
      /**
       * Checks whether this object is somehow a child of the given object
       * @param mixed $obj
@@ -293,6 +358,8 @@ class PmAclObject extends AclObject{
      public function is($obj){
          parent::beforeIs($obj);
          
+         $obj = AclObject::loadObjectStatic($obj, $this->getType());
+          
         //Get all nodes of the object
          $paths = $obj->getPaths();
          $nodeClass = Util::getNodeNameOfObject($this);
@@ -315,8 +382,11 @@ class PmAclObject extends AclObject{
 
              //Go down to the nitty-gritty
              $type = Util::getDataBaseType($obj);
+             //Select only aliases which are in fact business-rules
+             $aliases = BusinessRules::listBusinessAliases();
+             $in   = Util::generateInStatement($aliases);
              $nodes = $nodeClass::model()->with($type)->findAll(
-                     $type.'.alias IS NOT NULL AND '.$pathCondition
+                     $type.'.alias '.$in
                  );
 
              //Now, check all the Business-rules
@@ -324,9 +394,7 @@ class PmAclObject extends AclObject{
                  $collection = $node->{$type};
 
                  if($collection->alias != NULL){
-                     $val = BusinessRules::fulfillsBusinessRule(
-                             'is'.$collection->alias, $this
-                             , $obj, 'is');
+                     $val = $this->callBusinessRule('is'.$collection->alias, $obj, 'is');
                      if($val)
                          return true;
                  }
@@ -335,6 +403,37 @@ class PmAclObject extends AclObject{
              return false;
          }
 
+     }
+     
+     /**
+      * This packs the object and this object itself in the proper array
+      * and calls the specific business-rule taking care of aro/aco specific
+      * syntax
+      * @param  string  the Rule
+      * @param  mixed   the given object
+      * @param  string  the action
+      */
+     protected function callBusinessRule($rule, $obj, $action){
+         $arr = array(
+           'father' => Util::getByIdentifierGraceful($obj),
+           'child'=> Util::getByIdentifierGraceful($this)
+         );
+         return $this->callSpecificBusinessRule($rule, $arr, $action);
+     }
+     
+     /**
+      * This takes care of the aro/aco specifis for calling business-rules
+      * @param  string  the Rule
+      * @param  arr     array('child' and 'father')
+      * @param  string  the action
+      */
+     abstract protected function callSpecificBusinessRule($rule, $arr, $action);
+     
+     /**
+      * @return string  the type of this object ('Aro' or 'Aco')
+      */
+     public function getType(){
+         return ucfirst(Util::getDataBaseType($this));
      }
 }
 

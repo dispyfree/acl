@@ -34,9 +34,17 @@ class Action extends CActiveRecord
         if(is_string($actions))
             $actions = static::translateStringActions($actions);
 
-        //If it's an Action-Obj (assuming we get only action-objects)
-        elseif(is_object($actions))
-            return array($actions->name);
+        //If it's an Action-Obj 
+        elseif(is_object($actions)){
+            
+            //If we get a single action
+            if($actions instanceof Action)
+                return array($actions->name);
+            //Well... what the hell is this??
+            else
+                throw new RuntimeException('Invalid Action specified');
+            
+        }
         //If it's an array of action-objects
         elseif(is_array($actions) && $actions[0] instanceof Action){
             $newActions = array();
@@ -45,6 +53,8 @@ class Action extends CActiveRecord
             }
             return $newActions;
         }
+        
+        //If nothing has applied, we have the actions in plain form - a list of strings
 
         //Now, check if the object restricts the actions
         $class = NULL;

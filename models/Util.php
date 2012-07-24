@@ -91,15 +91,50 @@ class Util {
      *  if the identifier doesn't match any instance.
      * @param AclObject identifier [model, foreign_key]
      */
-    public function getByIdentifier($identifier){
+    public static function getByIdentifier($identifier){
         if($identifier->model == NULL || $identifier->foreign_key == NULL)
                 return NULL;
 
         if(!is_subclass_of($identifier->model, "CActiveRecord"))
                 throw new RuntimeException('Invalid Identifier (model): '.$identifier->model);
 
-        $class = $idenetifier->model;
+        $class = $identifier->model;
         return $class::model()->findByPk($identifier->foreign_key);
+    }
+    
+    /**
+     * Behaves just as getByIdentifier but returns the object itself if no
+     * associated record is found
+     * @param AclObject $identifier
+     * @return mixed 
+     */
+    public static function getByIdentifierGraceful($identifier){
+        //If this is already the desired instance
+        if($identifier instanceof CActiveRecord)
+            return $identifier;
+        
+        $res = self::getByidentifier($identifier);
+        if($res == NULL)
+            return $identifier;
+        return $res;
+    }
+    
+    /**
+     * Replaces all occurences of a key in $string with the keys value in $array 
+     * @param string    $string    the string to replace in
+     * @param array     $array     the keys/values
+     */
+    public static function rep($string, $array){
+        foreach($array as $key=>$value){
+            $string = str_replace($key, $value, $string);
+        }
+        
+        return $string;
+    }
+    
+    public static function addGroupRestr($relation, $restrictions){
+        return RestrictedActiveRecordBehavior::addGroupRestriction($relation,
+                $restrictions);
     }
 
 }

@@ -29,7 +29,7 @@ abstract class AclObjectBehavior extends CActiveRecordBehavior{
      * @throws RuntimeException 
      */
     protected function loadObject(){
-       return AclObject::loadObjectStatic($this->getOwner(), $this->getType());
+       return $this->_obj = AclObject::loadObjectStatic($this->getOwner(), $this->getType());
     }
     
     /**
@@ -60,6 +60,61 @@ abstract class AclObjectBehavior extends CActiveRecordBehavior{
      public function is($obj){
         $this->loadObject();
         return $this->_obj->is($obj);
+     }
+     
+     
+     /**
+      * This method takes care that autoJoins are done
+      * @param type $evt 
+      */
+     public function afterSave(&$evt){
+         parent::afterSave($evt);
+         
+         $owner = $this->getOwner();
+         
+         if($owner->isNewRecord){
+             $this->performAutoJoins();
+         }
+     }
+     
+     /**
+      * Performs the autoJoins defined in the configuration or by the model
+      * NOTE: This method will bypass any restrictions on joins
+      */
+     protected function performAutoJoins(){
+         $owner = $this->getOwner();
+         $identifiers = $this->getAutoJoins($owner);
+         
+         foreach($identifiers as $identifier){
+             
+             //Bypass any checks
+             $owner->join($identifier, true);
+         }
+     }
+     
+     /**
+      * Returns a list of identifiers to join for the given object
+      * @param CActiveRecord    $obj  the object to fetch the autojoins for
+      * @return array   an array of identifiers to join
+      */
+     protected function getAutoJoins($obj){
+         
+         $identifiers = array();
+         $type        = lcfirst($this->getType());
+         
+         //Fetch the general config first
+         $joins         = Strategy::get('autoJoinGroups');
+         $identifiers   = isset($joins[$type]) ? $joins[$type] : array();  
+         
+         //Now, let's look if it has been overwritten
+         if($obj instanceof CActiveRecord){
+             $class = get_class($obj);
+             
+             if(isset($class::$autoJoinGroups))
+                 $identifiers = $class::$autoJoinGroups;
+         }
+         
+         return $identifiers;
      }
     
 }

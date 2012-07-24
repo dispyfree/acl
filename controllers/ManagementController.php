@@ -21,8 +21,23 @@ class ManagementController extends CController{
             );
         }
         
+    /**
+     * Defines the model name used for bare acl collections
+     * (that are virtual entities which do only exist in the acl system)
+     * @var string
+     */
     public $virtualModel = 'Collection';
-    public $aroForceList = array('User', 'Group');
+    
+    /*
+     * Defines which models should show up always in the dialog
+     * If the dialog is called on some acos, each type of aro gets a new tab.
+     * However, if no aro of a certain type has got any permission on all
+     * objects in the set, the type will not show up. 
+     * The types you specify here will always show up - independent from the 
+     * existence of any aros
+     * @var array
+     */
+    public $aroForceList = array('User');
         
     public function getModel($model = NULL, $type = 'aro'){
         if($model == NULL){

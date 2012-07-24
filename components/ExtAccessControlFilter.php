@@ -35,9 +35,7 @@ class ExtAccessRule extends CAccessRule{
             return true;
         
         //retrieve Collection
-        $aro = RGroup::model()->find('foreign_key = :id AND model = :model',
-                array(':id' => $user->id, ':model' => RequestingActiveRecord::$model)
-                );
+        $aro = RestrictedActiveRecord::getUser();
         
         if(!$aro)
             return false;

@@ -84,14 +84,20 @@ abstract class AclObject extends CActiveRecord{
     abstract public function fetchComprisedPositions();
     
     /**
+     * $dir = 'asc':
      * Builds a single SQL-statement comprising all given positions and their parents
      * This SQL-statement will match all those rows being located above the given positions including themselves
+      * 
+      * $dir = 'desc'
+      * The same, but with all the positions located below the given positions or 
+      * equal to them.
      * @param array $positions All positions to include in our statement
      * @param string $type aco/aro
+     * @param string $fieldPostfix  the postfix of the field (default: "_path" (suitable for the fields in the permission-table)
      * @param string $table the table comprising the map between objects and permissions
      * @return string the finished SQL-statement
      */
-    abstract public function addPositionCheck($positions, $type, $table = 't');
+    abstract public function addPositionCheck($positions, $type, $table = 't', $dir = 'asc', $fieldPostFix = '_path');
     
     /**
       * Creates a new node of this collection
@@ -283,6 +289,38 @@ abstract class AclObject extends CActiveRecord{
             $objects = $identifier;
             //Assure that the object has been saved
             $objects->assureSafety();
+            
+            //If the object has another type than the requested type - transform
+            //We can only check if a model is given at all
+            if($model != NULL){
+                $className = get_class($model);
+                
+                $bareType   = ucfirst(Util::getDataBaseType($objects));
+                $realType = Strategy::getClass($bareType);
+                //If the types don't match
+                if($realType != $className){
+                    /** Try to get the "highest" object
+                     * Why? objects are firstly always resolved using their 
+                     * CActiveRecord - properties. To retain consistency, 
+                     * we have to use this record, if possible ( otherwise, we'd
+                     * probably end up with a database entry of model "RGroup"
+                     * and another one with the real model name!
+                     * 
+                     * If there's no associated model, this will always be resolved
+                     * to the real class Name and no model name => consistency 
+                     * retained
+                     */
+                    $newObjects = Util::getByIdentifierGraceful($objects);
+                    
+                    //Only return this if we've got an associated model
+                    //Otherwise, fall back to the regular class
+                    //Otherwise => will lead to model => "RGroup"
+                    if($newObjects instanceof CActiveRecord)
+                        return self::loadObjectsStatic($newObjects, $model, $onlyFirst);
+                }
+            }
+            
+            return $objects;
         }
         elseif(is_a($identifier, "CActiveRecord")){
             

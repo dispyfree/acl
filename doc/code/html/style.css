@@ -1,0 +1,24 @@
+@import url("doxygen.css");
+
+#titlearea
+{
+	/*Don't display the project name and related stuff at all, getting more space for relevant stuff.*/
+	display: none;
+}
+
+hr {
+	/*Add more space between sections in the generated docs, so it's easier to locate contents.*/
+	height: 24px;
+}
+
+.tablist li
+{
+	/*Make the menu items not so high.*/
+	line-height: 24px;
+}
+
+#MSearchBox
+{
+	/*Vertically align the search box right on the line between the first and second menu row.*/
+	margin-top: 14px;
+}

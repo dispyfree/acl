@@ -12,6 +12,16 @@ class PmAco extends PmAclObject
 {
     
     /**
+      * This takes care of the aro/aco specifis for calling business-rules
+      * @param  string  the Rule
+      * @param  arr     array('child' and 'father')
+      * @param  string  the action
+      */
+     protected function callSpecificBusinessRule($rule, $arr, $action){
+         return BusinessRules::fulfillsBusinessRule($rule, NULL, $arr, $action);
+     }
+     
+    /**
      * Returns the static model of the specified AR class.
      * @param string $className active record class name.
      * @return PM_Aco the static model class

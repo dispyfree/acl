@@ -24,26 +24,13 @@ class PmAro extends PmAclObject
      * @param bool  $byPassCheck    Whether to bypass the additional grant-check
      * @return type 
      */
-    public function grant($obj, $actions, $byPassCheck){
+    public function grant($obj, $actions, $byPassCheck = false){
         $obj = $this->loadObject($obj, 'Aco');
         $actions = Action::translateActions($obj, $actions);
         
         //Check for the grant-Permission (if enabled)
-        $enableGrantCheck = Strategy::get('enableGrantRestriction');
-        if((!$byPassCheck) && $enableGrantCheck){
-            if(!$this->may($obj, 'grant'))
-                throw new RuntimeException(Yii::t('app', 'You are not permitted to grant on this object'));
-            
-            //Extended check, if enabled
-            $enableSpecificCheck = Strategy::get('enableSpecificGrantRestriction');
-            if($enableSpecificCheck){
-                foreach($actions as $action){
-                    $actionName = 'grant_'.$action;
-                    if(!$this->may($obj, $actionName))
-                        throw new RuntimeException(Yii::t('app', 'You are not permitted to grant this action on this object'));
-                }
-            }
-        }
+        if(!$byPassCheck)
+            $this->checkPermissionChange ('grant', $obj, $actions);
         
         //Load all nodes of this object
         $aroNodes = $this->getNodes();
@@ -88,11 +75,16 @@ class PmAro extends PmAclObject
      * Denies the given actions to the given object
      * @param mixed $obj any valid identifier
      * @param mixed $actions the actions to deny
+     * @param bool  $byPassCheck    Whether to bypass the additional deny-check
      * @return type 
      */
-    public function deny($obj, $actions){
+    public function deny($obj, $actions, $byPassCheck = false){
         $obj = $this->loadObject($obj, 'Aco');
         $actions = Action::translateActions($obj, $actions);
+        
+        //Check for the deny-Permission (if enabled)
+        if(!$byPassCheck)
+            $this->checkPermissionChange('deny', $obj, $actions);
         
         $aroNodes = $this->getNodes();
         $acoNodes = $obj->getNodes();
@@ -114,6 +106,61 @@ class PmAro extends PmAclObject
             if($suc === false)
                 throw new RuntimeException('Unabel to deny permission '.$action->id.' of '.$this->id.' to '.$obj->id);
         }
+    }
+    
+    /**
+     * This function checks whether the permission-change of the given type is permitted
+     * with respect to the given object and the actions
+     * If not, it throws an exception: otherwise it returns true
+     * @throws RuntimeException
+     * 
+     * @param   string  $type   either "grant" or "deny"
+     * @param   mixed   $obj    the object to change the permission on 
+     * @param   array   $actions    the actions to grant/deny
+     * @return  boolean true if succeeded
+     */
+    protected function checkPermissionChange($type, $obj, $actions){
+        
+        if(!in_array($type, array('grant', 'deny')))
+                throw new RuntimeException('Invalid permission-change type');
+        $ltype  = $type;
+        $type   = ucfirst($type);
+        
+        //The object who wants to perform this change must be permitted to do so
+        $aro = RestrictedActiveRecord::getUser();
+        
+        //Check if the change is restricted
+        $generalConfigEntry     = 'enablePermissionChangeRestriction';
+        
+        //If that's checked, there can be also specific checks
+        $specificConfigEntry    = 'enableSpecificPermissionChangeRestriction';
+        $enableCheck = Strategy::get($generalConfigEntry);
+        
+        if($enableCheck){
+            
+            //This aro may generally not do this
+            if(!$aro->may($obj, $ltype))
+                throw new RuntimeException(Yii::t('app', 
+                        'You are not permitted to {type} on this object',
+                        array('{type}' => $ltype)));
+            
+            //Extended check, if enabled
+            $enableSpecificCheck = Strategy::get($specificConfigEntry);
+            if($enableSpecificCheck){
+                
+                foreach($actions as $action){
+                    
+                    $actionName = $ltype.'_'.$action;
+                    if(!$aro->may($obj, $actionName))
+                        throw new RuntimeException(Yii::t('app', 
+                                'You are not permitted to {type} {action} on this object',
+                                array('{type}' => $ltype,
+                                      '{action}' => $actionName)));
+                }
+            }
+        }
+        
+        return true;
     }
     
     /**
@@ -142,7 +189,8 @@ class PmAro extends PmAclObject
             
             //An action which is not possible is never allowed
             if(isset($obj::$possibleActions) && !in_array($action, $possibleActions))
-                    return false;
+                    throw new AccessViolation('Action '.$action.' is not allowed on '
+                            .get_class($obj));
             
             //Perform general check
             if(RestrictedActiveRecord::mayGenerally($originalObj, $action))
@@ -167,13 +215,29 @@ class PmAro extends PmAclObject
                   'aroCondition' => $aroCondition,
                   'acoCondition' => $acoCondition,
                 );
-                if(!RestrictedActiveRecord::checkBirPermission($conditions, $params))
+                
+                $original = array(
+                  'aro' => Util::getByIdentifierGraceful($this),
+                  'aco' => Util::getByIdentifierGraceful($originalObj),
+                );
+                
+                if(!RestrictedActiveRecord::checkBirPermission($conditions, $params, $original))
                     return false;
             }
         }
         
         return true;
     }
+    
+    /**
+      * This takes care of the aro/aco specifis for calling business-rules
+      * @param  string  the Rule
+      * @param  arr     array('child' and 'father')
+      * @param  string  the action
+      */
+     protected function callSpecificBusinessRule($rule, $arr, $action){
+         return BusinessRules::fulfillsBusinessRule($rule, $arr, NULL, $action);
+     }
     
     
     /**
