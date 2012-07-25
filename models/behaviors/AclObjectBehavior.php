@@ -71,7 +71,7 @@ abstract class AclObjectBehavior extends CActiveRecordBehavior{
          parent::afterSave($evt);
          
          $owner = $this->getOwner();
-         
+         echo "afterSAve!";
          if($owner->isNewRecord){
              $this->performAutoJoins();
          }
@@ -88,7 +88,8 @@ abstract class AclObjectBehavior extends CActiveRecordBehavior{
          foreach($identifiers as $identifier){
              
              //Bypass any checks
-             $owner->join($identifier, true);
+             if(!$owner->join($identifier, true))
+                     throw new RuntimeException('Unable to join group');
          }
      }
      

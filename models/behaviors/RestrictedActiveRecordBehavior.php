@@ -491,7 +491,7 @@ class RestrictedActiveRecordBehavior extends AclObjectBehavior {
                 throw new RuntimeException('You are not allowed to create this object');
         }
 
-        return true;
+        return true && parent::beforeSave($event);
     }
 
     /**
@@ -518,7 +518,7 @@ class RestrictedActiveRecordBehavior extends AclObjectBehavior {
         if (!$aco->delete())
             throw new RuntimeException('Unable to delete associated Aco');
 
-        return true;
+        return true && parent::beforeDelete($event);
     }
 
     /**
@@ -543,6 +543,8 @@ class RestrictedActiveRecordBehavior extends AclObjectBehavior {
 
             $aro->grant($aco, RestrictedActiveRecord::getAutoPermissions($this->getOwner()), true);
         }
+        
+        return parent::afterSave($event);
     }
 
     /**

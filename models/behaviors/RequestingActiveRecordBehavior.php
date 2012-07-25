@@ -98,6 +98,8 @@ class RequestingActiveRecordBehavior extends AclObjectBehavior{
             if(!$aro->save())
                 throw new RuntimeError("Unable to save Aro-Collection");
         }
+        
+        parent::afterSave($event);
     }
     
     /**
@@ -122,6 +124,7 @@ class RequestingActiveRecordBehavior extends AclObjectBehavior{
             $transaction->rollback();
             throw $e;
         }
+        
     }
     
 }

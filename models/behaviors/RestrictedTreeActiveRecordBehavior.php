@@ -22,7 +22,7 @@ class RestrictedTreeActiveRecordBehavior extends CActiveRecordBehavior{
         parent::afterFind($evt);
         $this->oldParentId = $this->getOwner()->parent_id;
         
-        return true;
+        return true && parent::afterFind($evt);
     }
     
     /**
