@@ -23,36 +23,6 @@ abstract class AclObject extends CActiveRecord{
      abstract public function join($obj);
      
      /**
-      * Callback being executed before every join
-      * Usage of this method allows common behavior for several strategies 
-      * with respect to object transformations and a secure environment
-      * @param AclObject $obj 
-      */
-     protected function beforeJoin(&$obj){
-         $this->assureSafety($obj);
-     }
-     
-     /**
-      * Callback being executed before every leave
-      * Usage of this method allows common behavior for several strategies 
-      * with respect to object transformations and a secure environment
-      * @param AclObject $obj 
-      */
-     protected function beforeLeave(&$obj){
-         $this->assureSafety($obj);
-     }
-     
-     /**
-      * Callback being executed before every childhood-check
-      * Usage of this method allows common behavior for several strategies 
-      * with respect to object transformations and a secure environment
-      * @param AclObject $obj 
-      */
-     protected function beforeIs(&$obj){
-         $this->assureSafety($obj);
-     }
-     
-     /**
       * Leaves the given group
       * @param mixed $obj
       * @return boolean
@@ -287,8 +257,6 @@ abstract class AclObject extends CActiveRecord{
                 && is_subclass_of($identifier->pretends(), "Aclobject")
         )){
             $objects = $identifier;
-            //Assure that the object has been saved
-            $objects->assureSafety();
             
             //If the object has another type than the requested type - transform
             //We can only check if a model is given at all
@@ -323,11 +291,6 @@ abstract class AclObject extends CActiveRecord{
             return $objects;
         }
         elseif(is_a($identifier, "CActiveRecord")){
-            
-            //Again - assure safety
-            if($identifier->isNewRecord)
-                $identifier->save();
-            
             return self::loadObjectsStatic( array('model' => get_class($identifier), 'foreign_key' => $identifier->id), $model, $onlyFirst);
         }
         else{
@@ -372,39 +335,6 @@ abstract class AclObject extends CActiveRecord{
              return $model::model()->findByPk($this->foreign_key);
          }
          return NULL;
-     }
-     
-     /**
-      * Reassures that all passed objects have been saved
-      */
-     protected function assureSaved(){
-         $args = func_get_args();
-         foreach($args as $arg){
-             if($arg !== NULL && 
-                     is_object($arg) && 
-                     is_a($arg, "CActiveRecord") && 
-                     $arg->getIsNewRecord()){
-                     if(!$arg->save())
-                         throw new RuntimeException('Unable to save object');
-             }
-         }
-     }
-     
-     /**
-      * Assures that:
-      * - the object is of a proper class
-      * - all involved objects have been saved before they interact
-      * @param AclObject $obj 
-      */
-     protected function assureSafety(&$obj = NULL){
-         if($obj !== NULL){
-            $obj = $this->loadObject($obj);
-            //Assure that objects have been saved
-            $this->assureSaved($this, $obj);
-         }
-         else{
-             $this->assureSaved($this);
-         }
      }
     
      

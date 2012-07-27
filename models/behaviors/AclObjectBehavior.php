@@ -71,7 +71,6 @@ abstract class AclObjectBehavior extends CActiveRecordBehavior{
          parent::afterSave($evt);
          
          $owner = $this->getOwner();
-         echo "afterSAve!";
          if($owner->isNewRecord){
              $this->performAutoJoins();
          }

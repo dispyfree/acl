@@ -221,7 +221,6 @@ abstract class PmAclObject extends AclObject{
       * Processes post-deletion tasks 
       */
      public function beforeDelete(){ 
-         parent::beforeDelete();
          
          //Delete all associated AclNodes
         $class = Util::getNodeNameOfObject($this);
@@ -248,7 +247,6 @@ abstract class PmAclObject extends AclObject{
       * @return boolean
       */
      public function join($obj, $byPassCheck = false){
-         parent::beforeJoin($obj);
          
          $obj = AclObject::loadObjectStatic($obj, $this->getType());
          
@@ -280,7 +278,6 @@ abstract class PmAclObject extends AclObject{
       * @return boolean
       */
      public function leave($obj, $byPassCheck = false){
-         parent::beforeLeave($obj);
          
          $obj = AclObject::loadObjectStatic($obj, $this->getType());
           
@@ -356,7 +353,6 @@ abstract class PmAclObject extends AclObject{
       * @return boolean
       */
      public function is($obj){
-         parent::beforeIs($obj);
          
          $obj = AclObject::loadObjectStatic($obj, $this->getType());
           
