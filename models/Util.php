@@ -24,7 +24,7 @@ class Util {
                 return 'aro';
             case Strategy::getClass('Aco'):
             case Strategy::getClass('AcoNode'):
-            case 'AGroup':
+            case 'CGroup':
                 return 'aco';
             default:
                 throw new InvalidArgumentException('Unexpected Object');

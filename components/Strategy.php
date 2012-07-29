@@ -23,7 +23,7 @@ class Strategy {
       * Assuming you put it there... change it otherwise ^^
       * @var string 
       */
-     protected static $location = 'application.modules.acl.';
+     protected static $location = 'application.modules.acl';
      protected static $config   = NULL;
      
      public static function initialize(){

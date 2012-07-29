@@ -22,43 +22,74 @@ return array(
      * NULL 
      */
     'guestGroup' => 'Guest',
-    /**
-     * Enables the access-check in two layers: if enabled, the access will be firstly checked
-     * against a general permission-system and only (and only if) if that returns false, the 
-     * regular lookup will take place  
-     */
-    'enableGeneralPermissions' => false,
+    
+    
     /**
      * Enables the business rules for all actions (automatical lookup) _except_ the read-action
      */
-    'enableBusinessRules' => false,
+    'enableBusinessRules' => true,
+    
     /**
      * Sets the direction in which business-rules are applied. Default is to check
      * both sides 
-     * possible values: "both", "aro" and "aco"
+     * possible values: "all", "both", "aro" and "aco"
+     *
+     * The difference between "all" and "both" is that all evaluates _all_ rules 
+     * whereas both only accepts rules where only one (of aro and aco) are 
+     * determined using Business-Rules
      */
-    'lookupBusinessRules' => 'both',
+    'lookupBusinessRules' => 'all',
+    
+    
+    /**
+     * Enables the restriction of the grant/deny-action
+     * Note: If you enable this and assign no autoPermissions at all, only general permissions will
+     * grant something at all 
+     */
+    'enablePermissionChangeRestriction' => false,
+    
+    /**
+     * Enables you to restrict WHAT an Aro can grant/deny, whether it can grant something at all
+     */
+    'enableSpecificPermissionChangeRestriction' => false,
+    
+    /**
+     * Enables the check of join/deny operations based on permissions
+     * the actions are "join" and "leave"
+     */
+    'enableRelationChangeRestriction' => false,
+    
+    /**
+     * Permissions which are allowed for all the users on all objects
+     * default: only create 
+     */
+    'generalPermissions' => array('create'),
+    
     /**
      * Defines which permissions are automatically assigned to the creator of an object upon its creation
      * default: all
      * You can overwrite this using the autoPermissions-value of each object 
      */
     'autoPermissions' => '*',
+    
     /**
-     * Enables the restriction of the grant-action
-     * Note: If you enable this and assign no autoPermissions at all, only general permissions will
-     * grant something at all 
+     * Enables the access-check in two layers: if enabled, the access will be firstly checked
+     * against a general permission-system and only (and only if) if that returns false, the 
+     * regular lookup will take place  
      */
-    'enableGrantRestriction' => false,
+    'enableGeneralPermissions' => false,
+    
     /**
-     * Enables you to restrict WHAT an Aro can grant, if it can grant something at all
+     * Groups that will be automatically joined upon the creation of an object
+     * You can overwrite this setting for each model in model::$autoJoinGroups
+     * 
+     * PLEASE NOTE that this does not abide by the join/leave restrictions, if
+     * they are enabled.
      */
-    'enableSpecificGrantRestriction' => false,
-    /**
-     * Permissions which are allowed for all the users on all objects
-     * default: only create 
-     */
-    'generalPermissions' => array('create'),
+    'autoJoinGroups' => array(
+        'aro' => array('All'),
+        'aco' => array('All')
+    )
 );
 
 ?>
