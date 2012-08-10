@@ -87,7 +87,7 @@ class ListArosAction extends CAction {
             
             $actionId = $aro['action_id'];
             //Fetch Action
-            $action = Action::model()->findByPk($actionId);
+            $action = Util::enableCaching(Action::model(), 'action')->findByPk($actionId);
             
             if($action === NULL)
                 throw new RuntimeException('Invalid Action (Database Integrity at risk)');

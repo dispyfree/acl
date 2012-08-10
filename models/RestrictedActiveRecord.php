@@ -88,12 +88,12 @@ abstract class RestrictedActiveRecord extends CActiveRecord {
         //But before: fetch the positions of the current user
         $aroClass = Strategy::getClass('Aro');
         $user = RestrictedActiveRecord::getUser();
-        $aro = $aroClass::model()->find('model = :model AND foreign_key = :foreign_key', array(':model' => static::$model, ':foreign_key' => $user->id));
-
+        $aro  = $user;
+        
         //If we are nobody... we are a guest^^
         $guest = Strategy::get('guestGroup');
         if (!$aro && $guest) {
-            $aro = $aroClass::model()->find('alias = :alias', array(':alias' => $guest));
+            $aro = Util::enableCaching($aroClass::model(), 'aclObject')->find('alias = :alias', array(':alias' => $guest));
 
             //If there's no guest group... we are nobody and we may nothing ;)
             if (!$aro)
@@ -105,7 +105,7 @@ abstract class RestrictedActiveRecord extends CActiveRecord {
         $aroPositionCheck = $aro->addPositionCheck($aroPositions, "aro", "map");
 
         //Get our action :)
-        $action = Action::model()->find('name = :name', array(':name' => 'read'));
+        $action = Util::enableCaching(Action::model(), 'action')->find('name = :name', array(':name' => 'read'));
 
         if ($action === NULL)
             throw new RuntimeException('Unable to find action read');
@@ -169,7 +169,7 @@ abstract class RestrictedActiveRecord extends CActiveRecord {
         //First, fetch all of the action Ids
         $actions = Action::translateActions($this, $actions);
         $actionCondition = Util::generateInStatement($actions);
-        $actions = Action::model()->findAll('name ' . $actionCondition);
+        $actions = Util::enableCaching(Action::model(), 'action')->findAll('name ' . $actionCondition);
 
         $actionIds = array();
         foreach ($actions as $action) {
@@ -306,7 +306,7 @@ abstract class RestrictedActiveRecord extends CActiveRecord {
 
         $user = Yii::app()->user;
         $class = Strategy::getClass('Aro');
-        $aro = $class::model()->find('model = :model AND foreign_key = :foreign_key', array('model' => static::$model, 'foreign_key' => $user->id));
+        $aro = Util::enableCaching($class::model(), 'aroObject')->find('model = :model AND foreign_key = :foreign_key', array('model' => static::$model, 'foreign_key' => $user->id));
         if (!$aro)
             $aro = NULL;
 
@@ -423,7 +423,7 @@ abstract class RestrictedActiveRecord extends CActiveRecord {
                     . 'aco.alias ' . $inStatement
                     . ' OR aro.alias ' . $inStatement . ' )';
 
-            $permissions = Permission::model()->with($with)->findAll(
+            $permissions = Util::enableCaching(Permission::model(), 'permission')->with($with)->findAll(
                     array('condition' => $condition, 'params' => $params));
             $finishedPermissions[$mode] = $permissions;
         }

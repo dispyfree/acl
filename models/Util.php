@@ -99,7 +99,7 @@ class Util {
                 throw new RuntimeException('Invalid Identifier (model): '.$identifier->model);
 
         $class = $identifier->model;
-        return $class::model()->findByPk($identifier->foreign_key);
+        return self::enableCaching($class::model(), 'aclObject')->findByPk($identifier->foreign_key);
     }
     
     /**
@@ -135,6 +135,44 @@ class Util {
     public static function addGroupRestr($relation, $restrictions){
         return RestrictedActiveRecordBehavior::addGroupRestriction($relation,
                 $restrictions);
+    }
+    
+    /**
+     * Enables caching for the given object using the invalidation rules from the config
+     * @param mixed $obj    the object to enable Caching for
+     * @param string $type  the type of the object (collection, action or permission)
+     * @param CCacheDependency $dependency
+     * @param int $queryCount
+     * @return mixed
+     */
+    public static function enableCaching($obj, $type, $dependency = NULL, $queryCount = 1){
+        $types = array('collection', 'action', 'permission', 'aclObject', 'aroObject', 'structureCache');
+        
+        if(!in_array($type, $types))
+                throw new RuntimeException('Invalid cache type:'.$type);
+        
+        $cachingSettings = Strategy::get('caching');
+        
+        //Set the cache component, if changed
+        $dbConn = $obj->getDbConnection();
+        $oldCache = NULL;
+        $newCache = $cachingSettings['cacheComponent'];
+        if($dbConn->queryCacheID != $newCache){
+            $oldCache = $dbConn->queryCacheID;
+            $dbConn->queryCacheID = $cachingSettings;
+        }
+        
+        $results = $obj->cache($cachingSettings[$type], $dependency, $queryCount);
+        
+        //Reset cache if overwritten
+        if($oldCache !== NULL)
+            $dbConn->queryCacheID = $oldCache;
+        
+        return $results;
+    }
+    
+    public static function flushCache(){
+        return Yii::app()->cache->flush();
     }
 
 }

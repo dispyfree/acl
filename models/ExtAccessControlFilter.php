@@ -41,7 +41,7 @@ class ExtAccessRule extends CAccessRule{
         
         //retrieve Collection
         $class = Strategy::getClass('Aro');
-        $aro = $class::model()->find('foreign_key = :id AND model = :model',
+        $aro = Util::enableCaching($class::model(), 'aroObject')->find('foreign_key = :id AND model = :model',
                 array(':id' => $user->id, ':model' => RestrictedActiveRecord::$model)
                 );
         

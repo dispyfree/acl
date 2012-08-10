@@ -46,8 +46,16 @@ class RestrictedTreeActiveRecordBehavior extends CActiveRecordBehavior{
                 'foreign_key'   => $this->getOwner()->id
             ), 'Aco', true);
             
-            if($aco === NULL)
+             $aco2 = $acoClass->loadObject(
+                        array('model' => get_class($owner), 'foreign_key' => $owner->parent_id));
+            
+            if($aco === NULL || $aco2 === NULL)
                 throw new RuntimeException('Aco-object does not exist');
+            
+            //Before we leave the old one - check if we may write on the new one!
+            if(!$aco2->grants('write'))
+                throw new RuntimeException('You don\'t have sufficient permissions'
+                        .' on the new parent');
             
             //If we moved to another parent  and we had an old one
             if($this->oldParentId !== NULL){
@@ -57,14 +65,14 @@ class RestrictedTreeActiveRecordBehavior extends CActiveRecordBehavior{
             
             //Only choose a new parent if we have a new one - we don't necessarily have one :)
             if($owner->parent_id !== NULL){
-                $aco2 = $acoClass->loadObject(
-                        array('model' => get_class($owner), 'foreign_key' => $owner->parent_id));
                 if (!$aco->join($aco2))
                     throw new RuntimeException('Unable to choose new parent-aco');
             }
             
             //In the end, save the change
             $this->oldParentId = $owner->parent_id;
+            
+            Util::flushCache();
         }
         
         return true;

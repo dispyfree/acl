@@ -57,7 +57,7 @@ class SetPermissionAction extends CAction {
     }
     
     protected function getAction($model, $permission){
-        $action = Action::model()->find('name = :name', array(':name' => $permission));
+        $action = Util::enableCaching(Action::model(), 'action')->find('name = :name', array(':name' => $permission));
         if($action == NULL)
             throw new RuntimeException(Yii::t('acl', '{action} is not a valid action',
              array('{action}' => $permission)));

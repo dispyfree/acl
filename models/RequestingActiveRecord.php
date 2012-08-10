@@ -26,13 +26,13 @@ class RequestingActiveRecord extends CActiveRecord{
         $class = Strategy::getClass('Aro');
         
         if($this->aro === NULL){
-            $this->aro = $class::model()->find('model = :model AND foreign_key = :foreign_key', 
+            $this->aro = Util::enableCaching($class::model(), 'aroObject')->find('model = :model AND foreign_key = :foreign_key', 
                     array(':model' => get_class($this), 'foreign_key' => $this->id));
             
             //If there's no such Aro-Collection... use Guest ^^
             $guest = Strategy::get('guestGroup');
             if(!$this->aro && $guest){
-                $this->aro = $class::model()->find('alias = :alias', array(':alias' => $guest));
+                $this->aro = Util::enableCaching($class::model(), 'aroObject')->find('alias = :alias', array(':alias' => $guest));
                 
                 //If there's no guest...
                 if(!$this->aro)

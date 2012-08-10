@@ -33,13 +33,13 @@ class RequestingActiveRecordBehavior extends AclObjectBehavior{
         $owner = $this->getOwner();
         
         if($this->_obj === NULL){
-            $this->_obj = $class::model()->find('model = :model AND foreign_key = :foreign_key', 
+            $this->_obj = Util::enableCaching($class::model(), 'aroObject')->find('model = :model AND foreign_key = :foreign_key', 
                     array(':model' => get_class($owner), 'foreign_key' => $owner->id));
             
             //If there's no such Aro-Collection... use Guest ^^
             $guest = Strategy::get('guestGroup');
             if(!$this->_obj && $guest){
-                $this->_obj = $class::model()->find('alias = :alias', array(':alias' => $guest));
+                $this->_obj = Util::enableCaching($class::model(), 'aroObject')->find('alias = :alias', array(':alias' => $guest));
                 
                 //If there's no guest...
                 if(!$this->_obj)
@@ -69,7 +69,9 @@ class RequestingActiveRecordBehavior extends AclObjectBehavior{
      */
     public function grant($obj, $actions, $byPassCheck = false){
         $this->loadObject();
-        return $this->_obj->grant($obj, $actions, $byPassCheck);
+        $suc = $this->_obj->grant($obj, $actions, $byPassCheck);
+        
+        return $suc;
     }
     
     /**
@@ -80,7 +82,9 @@ class RequestingActiveRecordBehavior extends AclObjectBehavior{
      */
     public function deny($obj, $actions){
         $this->loadObject();
-        return $this->_obj->deny($obj, $actions);
+        $suc = $this->_obj->deny($obj, $actions);
+        
+        return $suc;
     }
     
     /**
@@ -103,7 +107,14 @@ class RequestingActiveRecordBehavior extends AclObjectBehavior{
     }
     
     /**
-     * This method takes care that every associated ACL-objects are properly removed
+     * Flushes the cache
+     */
+    public function afterDelete($event){
+        return parent::afterDelete($event);
+    }
+    
+    /**
+     * This method takes care that all associated ACL-objects are properly removed
      */
     public function beforeDelete($event){
         $owner = $this->getOwner();

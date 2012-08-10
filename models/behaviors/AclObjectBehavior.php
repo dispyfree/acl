@@ -39,7 +39,9 @@ abstract class AclObjectBehavior extends CActiveRecordBehavior{
       */
      public function join($obj){
          $this->loadObject();
-         return $this->_obj->join($obj);
+         $suc = $this->_obj->join($obj);
+         
+         return $suc;
      }
      
      /**
@@ -49,7 +51,9 @@ abstract class AclObjectBehavior extends CActiveRecordBehavior{
       */
      public function leave($obj){
         $this->loadObject();
-        return $this->_obj->leave($obj);
+        $suc = $this->_obj->leave($obj);
+
+        return $suc;
      }
      
      /**

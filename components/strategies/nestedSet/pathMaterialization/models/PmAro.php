@@ -42,7 +42,7 @@ class PmAro extends PmAclObject
             $aroIn = Util::generateInStatement(Util::getIdsOfObjects($aroNodes));
             $acoIn = Util::generateInStatement(Util::getIdsOfObjects($acoNodes));
             
-            $action = Action::model()->find('name = :name', array(':name' => $action));
+            $action = Util::enableCaching(Action::model(), 'action')->find('name = :name', array(':name' => $action));
             
             if($action === NULL)
                 throw new RuntimeException('Invalid action');
@@ -67,7 +67,8 @@ class PmAro extends PmAclObject
                     }
                 }
             }
-            
+         
+            Util::flushCache();
         }
     }
     
@@ -94,7 +95,7 @@ class PmAro extends PmAclObject
         
         foreach($actions as $action){
             
-            $action = Action::model()->find('name = :name', array(':name' => $action));
+            $action = Util::enableCaching(Action::model(), 'action')->find('name = :name', array(':name' => $action));
             
             if($action === NULL)
                 throw new RuntimeException('Invalid action');
@@ -102,9 +103,10 @@ class PmAro extends PmAclObject
             //Now, delete all the rows
             $suc = Permission::model()->deleteAll('aco_id '.$acoIn.' AND aro_id '.$aroIn.' AND action_id = :action_id',
                     array(':action_id' => $action->id));
-            
             if($suc === false)
                 throw new RuntimeException('Unabel to deny permission '.$action->id.' of '.$this->id.' to '.$obj->id);
+            
+            Util::flushCache();
         }
     }
     
@@ -183,7 +185,7 @@ class PmAro extends PmAclObject
         
         foreach($actions as $action){
             //First fetch the action
-            $action = Action::model()->find('name = :name', array(':name' => $action));       
+            $action = Util::enableCaching(Action::model(), 'action')->find('name = :name', array(':name' => $action));       
             if($action === NULL)
                 throw new RuntimeException('Invalid action');
             
@@ -203,7 +205,7 @@ class PmAro extends PmAclObject
             $condition = 'action_id = :action_id AND '.$aroCondition.' AND '.$acoCondition;
             $params = array(':action_id' => $action->id);
             //First, check the regular ACL
-                $perm = Permission::model()->find($condition,$params);
+                $perm = Util::enableCaching(Permission::model(), 'permission')->find($condition,$params);
 
                 if($perm === NULL && !$enableBir)
                     return false;

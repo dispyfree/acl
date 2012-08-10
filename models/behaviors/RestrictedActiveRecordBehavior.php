@@ -91,7 +91,6 @@ class RestrictedActiveRecordBehavior extends AclObjectBehavior {
         if (RestrictedActiveRecord::$byPassCheck)
             return $criteria;
 
-        //$criteria->distinct = true; //Important: there can be multiple locations which grant permission
         //Generates tableNames
         $acoC = $this->getUniqueName('acoC');
         $aco = $this->getUniqueName('aco');
@@ -128,7 +127,7 @@ class RestrictedActiveRecordBehavior extends AclObjectBehavior {
         $aroPositionCheck = $this->generateAroPositionCheck($permissionTable);
 
         //Get our action :)
-        $action = Action::model()->find('name = :name', array(':name' => 'read'));
+        $action = Util::enableCaching(Action::model(), 'action')->find('name = :name', array(':name' => 'read'));
 
         if ($action === NULL)
             throw new RuntimeException('Unable to find action read');
@@ -217,7 +216,7 @@ class RestrictedActiveRecordBehavior extends AclObjectBehavior {
         //If we are nobody... we are a guest^^
         $guest = Strategy::get('guestGroup');
         if (!$aro && $guest) {
-            $aro = $aroClass::model()->find('alias = :alias', array(
+            $aro = Util::enableCaching($aroClass::model(), 'aclObject')->find('alias = :alias', array(
                 ':alias' => $guest));
 
             //If there's no guest group... we are nobody and we may nothing ;)
@@ -242,7 +241,7 @@ class RestrictedActiveRecordBehavior extends AclObjectBehavior {
      */
     protected function generateGeneralPositionCheck($permissionTable) {
         $owner = $this->getOwner();
-        $generalAco = CGroup::model()->find('alias = :alias', array(
+        $generalAco = Util::enableCaching(CGroup::model(), 'aclObject')->find('alias = :alias', array(
             ':alias' => get_class($owner)
                 ));
 
@@ -442,7 +441,7 @@ class RestrictedActiveRecordBehavior extends AclObjectBehavior {
         $owner = $this->getOwner();
         $actions = Action::translateActions($owner, $actions);
         $actionCondition = Util::generateInStatement($actions);
-        $actions = Action::model()->findAll('name ' . $actionCondition);
+        $actions = Util::enableCaching(Action::model(), 'action')->findAll('name ' . $actionCondition);
 
         $actionIds = array();
         foreach ($actions as $action) {

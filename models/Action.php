@@ -163,7 +163,7 @@ class Action extends CActiveRecord
      * @return array[string] the actinos 
      */
     protected static function getAllStringActions(){
-        $actions = Action::model()->findAll();
+        $actions = Util::enableCaching(Action::model(), 'action')->findAll();
         $sActions = array();
         
         foreach($actions as $action){

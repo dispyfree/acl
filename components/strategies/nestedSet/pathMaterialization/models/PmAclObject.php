@@ -32,7 +32,7 @@ abstract class PmAclObject extends AclObject{
       */
      public function getPaths(){
         $nodeClass = Util::getNodeNameOfObject($this);
-        $nodes = $nodeClass::model()->findAll('collection_id = :id', array(':id' => $this->id));
+        $nodes = Util::enableCaching($nodeClass::model(), 'structureCache')->findAll('collection_id = :id', array(':id' => $this->id));
         $paths = array();
         
         foreach($nodes as $node){
@@ -237,7 +237,7 @@ abstract class PmAclObject extends AclObject{
         if(PmPermission::deleteByObject($this, $paths) === false)
                 throw new RuntimeException('Unable to delete associated permissions of '.$this->id);
         
-        return $num !== false;
+        return $num !== false && parent::beforeDelete();
      }
      
      /**
@@ -262,6 +262,9 @@ abstract class PmAclObject extends AclObject{
                 $this->createNode($objNode);
             }
             $transaction->commit();
+            
+            //If everything worked - flush the cache
+            Util::flushCache();
          }
          catch(Exception $e){
              $transaction->rollback();
@@ -302,6 +305,8 @@ abstract class PmAclObject extends AclObject{
                     throw new RuntimeException('Unable to delete node');
             }
             $transaction->commit();
+            Util::flushCache();
+            
             return true;
          }
          catch(Exception $e){
@@ -365,7 +370,7 @@ abstract class PmAclObject extends AclObject{
 
          $enableBusinessRules = Strategy::get('enableBusinessRules');
 
-         $regularly = $nodeClass::model()->find('collection_id = :id  AND'.$pathCondition,
+         $regularly = Util::enableCaching($nodeClass::model(), 'structureCache')->find('collection_id = :id  AND'.$pathCondition,
                  array(':id' => $this->id)) !== NULL;
 
          if(!$enableBusinessRules){
@@ -381,7 +386,7 @@ abstract class PmAclObject extends AclObject{
              //Select only aliases which are in fact business-rules
              $aliases = BusinessRules::listBusinessAliases();
              $in   = Util::generateInStatement($aliases);
-             $nodes = $nodeClass::model()->with($type)->findAll(
+             $nodes = Util::enableCaching($nodeClass::model(), 'structureCache')->with($type)->findAll(
                      $type.'.alias '.$in
                  );
 

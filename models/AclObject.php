@@ -206,6 +206,9 @@ abstract class AclObject extends CActiveRecord{
                 $method = 'find';
             else
                 $method = 'findAll';
+        
+        //Enable Caching
+        $model = Util::enableCaching($model, 'collection');
             
         //An alias is being used
         if(is_string($identifier)){
@@ -222,6 +225,8 @@ abstract class AclObject extends CActiveRecord{
                     $obj->save();
                     
                     $objects = $onlyFirst ? $obj : array($obj);
+                    
+                    //@todo: clear cache here for an empty result may be cached earlier
                }
             }
             
@@ -310,31 +315,34 @@ abstract class AclObject extends CActiveRecord{
     public function getNodes(){
         $class = Util::getNodeNameOfObject($this);
         
-        return $class::model()->findAll('collection_id = :id', array(':id' => $this->id));
+        return Util::enableCaching($class::model(), 'structureCache')->findAll('collection_id = :id', array(':id' => $this->id));
     }
     
     /**
       * Processes post-saving tasks 
       */
      public function afterSave(){
-         parent::afterSave();
          
          //If we're new here, we also need a new node for the permissions :)
          if($this->isNewRecord){
-             $this->createNode();
+            $this->createNode();
+             
+             Util::flushCache();
          }
+         return parent::afterSave();
+     }
+     
+     public function afterDelete(){
+        return  parent::afterDelete()
+                && Util::flushCache();
      }
      
      /**
       * Loads the associated object, if possible, and returns it
-      * @return mixed   NULL or a child of CActiveREcord
+      * @return mixed    a child of CActiveREcord or NULL
       */
      public function getAssociatedObject(){
-         if(is_subclass_of($this->model, "CActiveRecord")){
-             $model = $this->model;
-             return $model::model()->findByPk($this->foreign_key);
-         }
-         return NULL;
+         return Util::getByIdentifier($this);
      }
     
      
