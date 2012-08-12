@@ -71,7 +71,7 @@ abstract class AclObjectBehavior extends CActiveRecordBehavior{
       * This method takes care that autoJoins are done
       * @param type $evt 
       */
-     public function afterSave(&$evt){
+     public function afterSave($evt){
          parent::afterSave($evt);
          
          $owner = $this->getOwner();

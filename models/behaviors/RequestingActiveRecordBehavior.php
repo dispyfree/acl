@@ -100,7 +100,7 @@ class RequestingActiveRecordBehavior extends AclObjectBehavior{
             $aro->model = get_class($owner);
             $aro->foreign_key = $owner->getPrimaryKey();
             if(!$aro->save())
-                throw new RuntimeError("Unable to save Aro-Collection");
+                throw new RuntimeException("Unable to save Aro-Collection");
         }
         
         parent::afterSave($event);
@@ -127,7 +127,7 @@ class RequestingActiveRecordBehavior extends AclObjectBehavior{
         
         $transaction = Yii::app()->db->beginTransaction();
         try{
-            $suc =$aro->delete()&& parent::beforeDelete();
+            $suc =$aro->delete()&& parent::beforeDelete($event);
             $transaction->commit();
             return $suc;
         }

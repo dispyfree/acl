@@ -172,10 +172,9 @@ class RestrictedActiveRecordBehavior extends AclObjectBehavior {
                         'ON' => 'WHERE'
                     ));
 
-            /**
-             *  Now, we need to place the where at the end of all conditions
-             */
-            preg_match('/^.*( WHERE.*)$/', $joins[0], &$matches);
+            //  Now, we need to place the where at the end of all conditions
+            $matches = array();
+            preg_match('/^.*( WHERE.*)$/', $joins[0], $matches);
             $conditions = $matches[1];
             $joins[0] = str_replace($conditions, '', $joins[0]);
 

@@ -18,7 +18,7 @@ class RestrictedTreeActiveRecordBehavior extends CActiveRecordBehavior{
     
     protected $oldParentId = NULL;
     
-    public function afterFind(&$evt) {
+    public function afterFind($evt) {
         parent::afterFind($evt);
         $this->oldParentId = $this->getOwner()->parent_id;
         
@@ -29,7 +29,7 @@ class RestrictedTreeActiveRecordBehavior extends CActiveRecordBehavior{
      * If the parent has changed, adjust the permissions
      * @throws RuntimeException 
      */
-    public function afterSave(&$evt) {
+    public function afterSave($evt) {
         parent::afterSave($evt);
         $owner = $this->getOwner();
         
