@@ -1,8 +1,8 @@
 <?php
 
 // change the following paths if necessary
-$yiit='/var/www/libs/yii/framework/yii.php';
-$config= '../../config/main.php';
+$yiit='/var/www/libs/yii/framework/yiit.php';
+$config= dirname(__FILE__).'/../../../config/main.php';
 
 require_once($yiit);
 require_once('./WebTestCase.php');

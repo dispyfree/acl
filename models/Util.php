@@ -87,7 +87,7 @@ class Util {
 
     /**
      *  Retrieves the requested object by the given identifier (an object)
-     *  Will throw an exception if the model-name is invalid but return NULL
+     *  Will throw an exception if the model-name is invalid but returns NULL
      *  if the identifier doesn't match any instance.
      * @param AclObject identifier [model, foreign_key]
      */
@@ -172,7 +172,9 @@ class Util {
     }
     
     public static function flushCache(){
-        return Yii::app()->cache->flush();
+        if(isset(Yii::app()->cache))
+            return Yii::app()->cache->flush();
+        return true;
     }
 
 }

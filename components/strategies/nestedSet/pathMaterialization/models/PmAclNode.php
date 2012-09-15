@@ -15,23 +15,27 @@ abstract class PmAclNode extends AclNode{
      */
     protected function removeFullRecursively(){
         $path = PmPathManager::appendToPath($this->path, $this->id);
-        Yii::trace($path, 'trace');
-        //Firstly: remove nodes
-        $num = static::model()->deleteAll('path REGEXP "^:path'.
-                PmPathManager::getSeparator().'*" ', 
-                array(':path' => $path));
         
+        //Firstly: remove nodes
+        $num = static::model()->deleteAll('path REGEXP "^'.$path.'" ');
+
         if($num === false)
             throw new RuntimeException('Unable to remove child nodes');
         
-        //Secondly: remove permissions
+        /**
+         * Secondly: remove permissions
+         * 1) Remove direct permissions of this node
+         * 2) Remove permissions of all child nodes
+         */
         $type = Util::getDataBaseType($this);
-        $num = PmPermission::model()->deleteAll($type."_path REGEXP '^:path".
-                PmPathManager::getSeparator()."*' ", 
-                array(':path' => $path));
+        $num = PmPermission::model()->deleteAll($type.'_id = :id', array(':id' => $this->id));
+        if($num === false)
+            throw new RuntimeException('Unable to remove directly associated permissions');
+        
+        $num = PmPermission::model()->deleteAll($type."_path REGEXP '^".$path."'");
         
         if($num === false)
-            throw new RuntimeException('Unable to remove associated permissions');
+            throw new RuntimeException('Unable to remove childrens\' associated permissions');
     }
     
     
