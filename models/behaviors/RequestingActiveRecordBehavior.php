@@ -21,32 +21,6 @@ class RequestingActiveRecordBehavior extends AclObjectBehavior{
     protected function getType(){
         return 'Aro';
     }
-    
-    /**
-     * Loads the associated Object
-     * this method must be overwritten because we have additional checks here
-     * @throws RuntimeException 
-     */
-    protected function loadObject(){
-        $class = Strategy::getClass($this->getType());
-        
-        $owner = $this->getOwner();
-        
-        if($this->_obj === NULL){
-            $this->_obj = Util::enableCaching($class::model(), 'aroObject')->find('model = :model AND foreign_key = :foreign_key', 
-                    array(':model' => get_class($owner), 'foreign_key' => $owner->id));
-            
-            //If there's no such Aro-Collection... use Guest ^^
-            $guest = Strategy::get('guestGroup');
-            if(!$this->_obj && $guest){
-                $this->_obj = Util::enableCaching($class::model(), 'aroObject')->find('alias = :alias', array(':alias' => $guest));
-                
-                //If there's no guest...
-                if(!$this->_obj)
-                    throw new RuntimeException('There is no associated Aro nor a guest-group');
-            }
-        }
-    }
        
     
     /**

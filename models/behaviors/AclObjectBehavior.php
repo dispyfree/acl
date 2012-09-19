@@ -19,6 +19,21 @@ abstract class AclObjectBehavior extends CActiveRecordBehavior{
     protected $_obj = NULL;
     
     /**
+     *  Stores the type if the user has explicitely specified one
+     * @var string either "Aco" or "Aro"
+     */
+    protected $_type = NULL;
+    
+    /**
+     * A few helper functions to set and retrieve the type of this behavior's 
+     * object explicitely 
+     */
+    public function beAro(){ $this->_type = "Aro"; }
+    public function beAco(){ $this->_type = "Aco"; }
+    public function isAro(){ return $this->_type == 'Aro'; }
+    public function isAco(){ return !$this->isAro();}
+    
+    /**
      * Overwrite this method to return the actual class Name
      * @return  either "Aro" or "Aco"
      */
@@ -29,7 +44,8 @@ abstract class AclObjectBehavior extends CActiveRecordBehavior{
      * @throws RuntimeException 
      */
     protected function loadObject(){
-       return $this->_obj = AclObject::loadObjectStatic($this->getOwner(), $this->getType());
+        $type = ($this->_type !== NULL) ? $this->_type : $this->getType();
+       return $this->_obj = AclObject::loadObjectStatic($this->getOwner(), $type);
     }
     
     /**

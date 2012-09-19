@@ -300,15 +300,36 @@ abstract class RestrictedActiveRecord extends CActiveRecord {
      * @throws RuntimeException 
      */
     public static function getUser() {
-
+        /**
+         * If there is an object in attendance, this takes precedence over all 
+         * other objects 
+         */
         if (self::$inAttendance !== NULL)
             return AclObject::loadObjectsStatic(self::$inAttendance, Strategy::getClass('Aro'));
-
-        $user = Yii::app()->user;
-        $class = Strategy::getClass('Aro');
-        $aro = Util::enableCaching($class::model(), 'aroObject')->find('model = :model AND foreign_key = :foreign_key', array('model' => static::$model, 'foreign_key' => $user->id));
-        if (!$aro)
-            $aro = NULL;
+        
+        $aro = NULL;
+        //We can only fetch the object if the user is really logged in
+        if(!Yii::app()->user->isGuest()){
+            $user = Yii::app()->user;
+            $identifier = array('model' => static::$model, 'foreign_key' => $user->id);
+            $aro = AclObject::loadObjectStatic($identifier, 'Aro');
+        }
+        /**
+         * Why no if(!$aro){...} ? 
+         * with strictMode = false, the object for the user being logged in is 
+         * automagically created and as he's logged in, we don't want to treat him
+         * as a guest anyway 
+         */
+        else{
+            //If the user is not logged in, he's a guest
+            $guest = Strategy::get('guestGroup');
+            if($guest)
+                $aro = AclObject::loadObjectStatic(array('alias' => $guest), 'Aro');
+        }
+        
+         //If there's no guest...
+        if(!$aro)
+            throw new RuntimeException('Unable to determine aro: the user is not logged in and the guest group is disabled');
 
         return $aro;
     }
