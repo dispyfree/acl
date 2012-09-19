@@ -51,8 +51,8 @@ class BusinessRules {
          * Is this a callback? If yes, is it valid? 
          */
         if(is_array($callback)){
-            $this->assureIsCallable($rule, $callback);        
-            return $callback($aro, $aco, $action);
+            self::assureIsCallable($rule, $callback);        
+            return call_user_func($callback, $aro, $aco, $action);
         }
         
         /**

@@ -40,7 +40,7 @@ class BusinessRulesTest extends CTestCase{
         /**
          * The author always has all permissions on whatever is his own
          */
-        $this->assertTrue($aro->grant('All', '*'));
+        $aro->grant('All', '*');
         
         /**
          * Now, the user is no author and therefore doesn't have any access 
