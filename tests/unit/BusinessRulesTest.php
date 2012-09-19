@@ -18,48 +18,60 @@ class BusinessRulesTest extends CTestCase{
          * Most times you'll use them, but we'll refrain from them as they'd bloat
          * our test case 
          */
-        $aco = new CGroup();
-        $aco->alias = 'own';
-        $this->assertTrue($aco->save());
         
-        $aco1 = new CGroup();
-        $aco1->alias = 'foreign';
-        $this->assertTrue($aco1->save());
+        $author = new RGroup();
+        $author->alias = 'Author';
+        $this->assertTrue($author->save());
         
-        $aco->join('All');
-        $aco1->join('All');
+        $user = new RGroup();
+        $user->alias = 'user';
+        $this->assertTrue($user->save());
         
-        $aro = new RGroup();
-        $aro->alias = 'Author';
-        $this->assertTrue($aro->save());
+        /**
+         * If guest mode is enabled and nobody's logged in (what's the default case
+         * in unit tests), newly created objects are by default assigned to the
+         * "Guest" group (see default configuration). If we act as some random user, we 
+         * don't run into this hassle.
+         */
+        $randomUser = new RGroup();
+        $randomUser->alias = 'someOtherUser';
+        $this->assertTrue($randomUser->save());
+        RestrictedActiveRecord::$inAttendance = $randomUser;
         
-        $aro1 = new RGroup();
-        $aro1->alias = 'user';
-        $this->assertTrue($aro1->save());
+        $own = new CGroup();
+        $own->alias = 'own';
+        $this->assertTrue($own->save());
+        
+        $foreign = new CGroup();
+        $foreign->alias = 'foreign';
+        $this->assertTrue($foreign->save());
+        
+        $own->join('All');
+        $foreign->join('All');
         
         /**
          * The author always has all permissions on whatever is his own
          */
-        $aro->grant('All', '*');
+        $author->grant('All', '*');
         
         /**
          * Now, the user is no author and therefore doesn't have any access 
          */
-        $this->assertFalse($aro1->may($aco, 'read'));
-        $this->assertFalse($aro1->may($aco1, 'read'));
+        $this->assertFalse($user->may($own, 'read'));
+        $this->assertFalse($user->may($foreign, 'read'));
         
         /**
          * Register the business rule and lo and behold - he has the permission! 
          */
         BusinessRules::registerBusinessRule('isAuthor', array($this, 'isOwn'));
-        $this->assertTrue($aro1->may($aco, 'read'));
+        $this->assertTrue($user->may($own, 'read'));
         //The user is no owner of the other one yet
-        $this->assertFalse($aro1->may($aco1, 'read'));
+        $this->assertFalse($user->may($foreign, 'read'));
         
         /**
          * Remove objects from database 
          */
-        $objects = array($aro, $aro1, $aco, $aco1);
+        $objects = array($author, $user, $randomUser, $own, $foreign);
         
         foreach($objects as $obj){
             $this->assertTrue($obj->delete());

@@ -211,7 +211,14 @@ abstract class AclObject extends CActiveRecord{
         $model = Util::enableCaching($model, 'collection');
             
         //An alias is being used
-        if(is_string($identifier)){
+        if(is_string($identifier) || 
+                /**
+                 * Consider the aliase array syntax 
+                 */
+                (is_array($identifier) && isset($identifier['alias']))){
+            
+            if(is_array($identifier))
+                $identifier = $identifier['alias'];
             
             $objects = $model->$method('alias=:alias', array('alias' => $identifier));
             

@@ -30,6 +30,7 @@ class RequestingActiveRecordBehavior extends AclObjectBehavior{
      * @return bool true if access is granted, false otherwise
      */
     public function may($obj, $action){
+        $this->_type = NULL;
         $this->loadObject();
         return $this->_obj->may($obj, $action);
     }
@@ -42,6 +43,7 @@ class RequestingActiveRecordBehavior extends AclObjectBehavior{
      * @return bool 
      */
     public function grant($obj, $actions, $byPassCheck = false){
+        $this->_type = NULL;
         $this->loadObject();
         $suc = $this->_obj->grant($obj, $actions, $byPassCheck);
         
@@ -55,6 +57,7 @@ class RequestingActiveRecordBehavior extends AclObjectBehavior{
      * @return bool 
      */
     public function deny($obj, $actions){
+        $this->_type = NULL;
         $this->loadObject();
         $suc = $this->_obj->deny($obj, $actions);
         

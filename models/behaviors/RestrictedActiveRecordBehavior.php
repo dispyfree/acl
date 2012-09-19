@@ -550,6 +550,7 @@ class RestrictedActiveRecordBehavior extends AclObjectBehavior {
      * @param string $permission 
      */
     public function grants($permission) {
+        $this->_type = NULL;
         $aro = RestrictedActiveRecord::getUser();
         return $aro->may($this->getOwner(), $permission);
     }
