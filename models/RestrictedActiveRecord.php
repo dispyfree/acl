@@ -309,7 +309,7 @@ abstract class RestrictedActiveRecord extends CActiveRecord {
         
         $aro = NULL;
         //We can only fetch the object if the user is really logged in
-        if(!Yii::app()->user->isGuest()){
+        if(!Yii::app()->user->isGuest){
             $user = Yii::app()->user;
             $identifier = array('model' => static::$model, 'foreign_key' => $user->id);
             $aro = AclObject::loadObjectStatic($identifier, 'Aro');
