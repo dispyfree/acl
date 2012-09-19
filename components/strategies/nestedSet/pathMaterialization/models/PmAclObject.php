@@ -222,22 +222,32 @@ abstract class PmAclObject extends AclObject{
       */
      public function beforeDelete(){ 
          
-         //Delete all associated AclNodes
+         /**
+          * Remove all direct and associated nodes
+          * We only need to remove the direct nodes of this object - they 
+          * will take care of their children
+          * @see AclNode::afterDelete 
+          */
         $class = Util::getNodeNameOfObject($this);
         $paths = $this->getPaths();
         
-        //Now, deletes nodes including their subnodes
-        $condition = PmPathManager::buildMultiplePathCondition("path", $paths);
-        $num = $class::model()->deleteAll($condition);
+        //Now, delete nodes including their subnodes
+        $nodes = $class::model()->findAll('collection_id = :id', 
+                array(':id' => $this->id));
         
-        if($num === false)
-            throw new RuntimeException('Unable to delete all nodes of '.$this->id);
+        foreach($nodes as $node){
+            if(!$node->delete())
+                throw new RuntimeException('Unable to delete '.$this->getType().'::'.$node->id);
+        }
+        
+        if(!$nodes)
+            throw new RuntimeException('Unable to delete nodes of '.$this->getType().'::'.$this->id);
         
         //Finally, delete all associated permissions
         if(PmPermission::deleteByObject($this, $paths) === false)
                 throw new RuntimeException('Unable to delete associated permissions of '.$this->id);
         
-        return $num !== false && parent::beforeDelete();
+        return $nodes && parent::beforeDelete();
      }
      
      /**
@@ -291,7 +301,7 @@ abstract class PmAclObject extends AclObject{
          $paths = $obj->getPaths();
          $nodeClass = Util::getNodeNameOfObject($this);
 
-         //We only want to leave usign the DIRECT child-nodes of this collection
+         //We only want to leave using the DIRECT child-nodes of this collection
          $oneLevelCondition = 'path = ":path"';
          $pathCondition = PmPathManager::buildMultiplePathCondition('path', $paths, $oneLevelCondition);
          

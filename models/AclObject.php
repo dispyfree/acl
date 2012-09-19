@@ -266,7 +266,7 @@ abstract class AclObject extends CActiveRecord{
             //If the object has another type than the requested type - transform
             //We can only check if a model is given at all
             if($model != NULL){
-                $className = get_class($model);
+                $className = Strategy::getClass(get_class($model));
                 
                 $bareType   = ucfirst(Util::getDataBaseType($objects));
                 $realType = Strategy::getClass($bareType);
