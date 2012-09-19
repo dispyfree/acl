@@ -172,7 +172,9 @@ class Util {
     }
     
     public static function flushCache(){
-        return Yii::app()->cache->flush();
+        if(isset(Yii::app()->cache))
+            return Yii::app()->cache->flush();
+        return true;
     }
 
 }
