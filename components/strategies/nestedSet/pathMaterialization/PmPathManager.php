@@ -59,19 +59,19 @@ class PmPathManager {
      * @return string   the condition 
      */
     public static function buildMultiplePathCondition($field, $paths, $additionalCondition = ''){
-        $condition = '';
+        $condition = ' ( ';
         
-        foreach($paths as $path){
+        foreach($paths as $index => $path){
             //If we aren'T at the beginning
-            if(strlen($condition) != 0)
+            if($index != 0)
                 $condition .= ' OR ';
             
             $condition .= " (".$field." REGEXP CONCAT('^', '".$path."') ". 
                         ($additionalCondition ? ' AND '.str_replace(':path', $path, $additionalCondition) : '')
                         ." ) ";
         }
-        
-        return $condition;
+
+        return $condition.' ) ';
     }
     
     public static function getSeparator(){

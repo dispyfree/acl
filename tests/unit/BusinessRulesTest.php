@@ -31,7 +31,7 @@ class BusinessRulesTest extends CTestCase{
          * If guest mode is enabled and nobody's logged in (what's the default case
          * in unit tests), newly created objects are by default assigned to the
          * "Guest" group (see default configuration). If we act as some random user, we 
-         * don't run into this hassle.
+         * don't run into this - it's not bad by itself, however it's "nicer" without.
          */
         $randomUser = new RGroup();
         $randomUser->alias = 'someOtherUser';
