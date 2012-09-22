@@ -25,6 +25,7 @@ class Strategy {
       */
      protected static $location = 'application.modules.acl';
      protected static $config   = NULL;
+     protected static $configBackup = NULL;
      
      public static function initialize(){
          if(!static::$initialized){
@@ -37,7 +38,7 @@ class Strategy {
              if(!$config)
                  throw new RuntimeException('Unable to load configuration');
              
-             static::$config = $config;
+             static::$configBackup = static::$config = $config;
              static::createShortcutClasses();
          }
      }
@@ -69,6 +70,34 @@ class Strategy {
      public static function get($propName){
          self::initialize();
          return @static::$config[$propName];
+     }
+     
+     /**
+      * Sets the given value of the strategy config
+      * CAUTION: Changing these values can cause serious harm. Do only call 
+      * this method if you know exactly what you are doing. 
+      * Changing the config after the initialization of the application does virtually
+      * always cause unexpected behavior.
+      * 
+      * @param string $propName they key of the property
+      * @param mixed  $value    the new value
+      * @return mixed the old value
+      */
+     public static function set($propName, $value){
+         self::initialize();
+         $oldValue = @static::$config[$propName];
+         static::$config[$propName] = $value;
+         return $oldValue;
+     }
+     
+     /**
+      * Resets the configuration to its initial state
+      * @return array the current configuration 
+      */
+     public static function resetConfig(){
+         $tmp = static::$config;
+         static::$config = static::$configBackup;
+         return $tmp;
      }
      
      /**

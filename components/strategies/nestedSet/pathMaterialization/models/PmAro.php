@@ -28,6 +28,14 @@ class PmAro extends PmAclObject
         $obj = $this->loadObject($obj, 'Aco');
         $actions = Action::translateActions($obj, $actions);
         
+        /**
+          * Create sandbox and execute action on it if this object is virtual
+          */
+         $params = array($obj, $actions, $byPassCheck);
+         list($sandboxed, $returnValue) = $this->performSandBoxedAction('grant', $params);
+         if($sandboxed)
+             return $returnValue;
+        
         //Check for the grant-Permission (if enabled)
         if(!$byPassCheck)
             $this->checkPermissionChange ('grant', $obj, $actions);

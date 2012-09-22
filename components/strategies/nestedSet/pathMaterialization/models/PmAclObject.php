@@ -257,8 +257,15 @@ abstract class PmAclObject extends AclObject{
       * @return boolean
       */
      public function join($obj, $byPassCheck = false){
-         
          $obj = AclObject::loadObjectStatic($obj, $this->getType());
+         
+         /**
+          * Create sandbox and execute action on it if this object is virtual
+          */
+         $params = array($obj, $byPassCheck);
+         list($sandboxed, $returnValue) = $this->performSandBoxedAction('join', $params);
+         if($sandboxed)
+             return $returnValue;
          
          if(!$byPassCheck)
             $this->checkRelationChange('join', $obj);
@@ -363,14 +370,13 @@ abstract class PmAclObject extends AclObject{
     }
      
      /**
-      * Checks whether this object is somehow a child of the given object
+      * Checks whether this object is a child of the given object somehow
       * @param mixed $obj
       * @return boolean
       */
      public function is($obj){
-         
          $obj = AclObject::loadObjectStatic($obj, $this->getType());
-          
+
         //Get all nodes of the object
          $paths = $obj->getPaths();
          $nodeClass = Util::getNodeNameOfObject($this);

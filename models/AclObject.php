@@ -277,7 +277,9 @@ abstract class AclObject extends CActiveRecord{
                 
                 $bareType   = ucfirst(Util::getDataBaseType($objects));
                 $realType = Strategy::getClass($bareType);
-                //If the types don't match
+                /**
+                 * If the types don't match
+                 */
                 if($realType != $className){
                     /** Try to get the "highest" object
                      * Why? objects are firstly always resolved using their 
@@ -291,12 +293,20 @@ abstract class AclObject extends CActiveRecord{
                      * retained
                      */
                     $newObjects = Util::getByIdentifierGraceful($objects);
-                    
-                    //Only return this if we've got an associated model
-                    //Otherwise, fall back to the regular class
-                    //Otherwise => will lead to model => "RGroup"
-                    if($newObjects instanceof CActiveRecord)
+
+                    /**
+                     * Only return this if we've got an associated model
+                     * (if we don't have, we simply get back our object)
+                     * Otherwise, fall back to the regular class
+                     * Otherwise => will lead to model "RGroup" or "CGroup"
+                     */
+                    if($newObjects != $objects)
                         return self::loadObjectsStatic($newObjects, $model, $onlyFirst);
+                    //Okay - use the bare acl object
+                    else{
+                        $identifier = array('model' => $realType, 'foreign_key' => $objects->id);
+                        return self::loadObjectsStatic($identifier, $model, $onlyFirst);
+                    }
                 }
             }
             
@@ -352,7 +362,74 @@ abstract class AclObject extends CActiveRecord{
          return Util::getByIdentifier($this);
      }
     
+     /**
+      * Checks whether this object is virtual.
+      * See virtualObjects in the config
+      * @return boolean  
+      */
+     public function isVirtual(){
+         $virtual = Strategy::get('virtualObjects');
+         
+         /**
+          * If no callback is given, $virtual is an array of aliases.
+          * Why don't we allow general identifiers? There's simply no efficient
+          * way to compare those identifiers to all kinds of objects. This means
+          * that the performance could decrease heavily in some cases.  
+          */
+         if(!is_callable($virtual)){
+             //If it doesn't have an alias, we're fast off
+             if($this->alias == NULL)
+                 return false;
+             
+             return in_array($this->alias, $virtual);
+         }
+         else
+             return call_user_func($virtual, $this);
+     }
      
+     /**
+      * Creates the sandbox object for this object and returns it
+      * @return AclObject the newly created object 
+      */
+     public function createSandBox(){
+         $class = get_class($this);
+         $obj   = new $class();
+         
+         $pattern = Strategy::get('virtualObjectPattern');
+         $pattern = str_replace('{ident}', openssl_random_pseudo_bytes(20), $pattern);
+         $obj->alias = $pattern;
+         
+         if(!$obj->save())
+             throw new RuntimeException(Yii::t('err', 'Unable to save sandbox object'));
+         
+         //Join the original object
+         if(!$obj->join($this))
+             throw new RuntimeException(Yii::t('err', 'Unable to join virtual object'));
+         
+         //Invoke callback, if specified
+         $callback = Strategy::get('virtualObjectCallback');
+
+         if(is_callable($callback))
+             call_user_func($callback, $this, $obj);
+         
+         return $obj;
+     }
+     
+     /**
+      * If this object is virtual, the given action with the params will be 
+      * performed on a sandboxed version of this object. 
+      * 
+      * @param string $action the action to perform (join, grant...)
+      * @param array $params the params to pass to the action
+      * @return array  array($performedSandboxed, $returnValueOfAction)
+      */
+     public function performSandBoxedAction($action, $params){
+         if($this->isVirtual()){
+             $sandBox = $this->createSandbox();
+             return array(true, call_user_method_array($action, $sandBox, $params));
+         }
+         return array(false, NULL);
+     }
      
 }
 
