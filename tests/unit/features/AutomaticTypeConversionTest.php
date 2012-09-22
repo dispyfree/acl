@@ -13,24 +13,7 @@ Strategy::initialize();
 
  */
 
-class testUser extends CActiveRecord{
-    public function behaviors(){
-            return array(
-              'aro'  => 'acl.models.behaviors.RestrictedActiveRecordBehavior',
-              'aco'  => 'acl.models.behaviors.RequestingActiveRecordBehavior'
-            );
-     }
-     
-    public static function model($className=__CLASS__)
-    {
-        return parent::model($className);
-    }
-
-    public function tableName()
-    {
-        return '{{user}}';
-    }
-}
+require_once(__DIR__.'/../common/testUser.php');
 
 class AutomaticTypeConversionTest extends CTestCase{
     
