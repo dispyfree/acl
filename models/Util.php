@@ -58,6 +58,17 @@ class Util {
      * @return string the in-statement 
      */
     public static function generateInStatement($options){
+        /**
+         *  Special case: if there are no options (which is a valid possibility)
+         *  the in statement is always false. 
+         *  Example: a object may or may NOT have any nodes. If it doesn't need
+         *  nodes, why should it bother to have some?
+         */
+        if(count($options) == 0)
+            //IN-Clauses don't contain NULL anyway (no valid id or alias)
+            //this is the most convenient way to keep a valid syntax
+            return ' IS NOT NULL AND False ';
+        
         $ret = ' IN ( ';
         
         foreach($options as $key =>$option){

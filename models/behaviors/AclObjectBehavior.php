@@ -28,10 +28,10 @@ abstract class AclObjectBehavior extends CActiveRecordBehavior{
      * A few helper functions to set and retrieve the type of this behavior's 
      * object explicitely 
      */
-    public function beAro(){ $this->_type = "Aro"; }
-    public function beAco(){ $this->_type = "Aco"; }
+    public function beAro(){ $this->setType('Aro'); }
+    public function beAco(){ $this->setType('Aco'); }
     public function isAro(){ return $this->_type == 'Aro'; }
-    public function isAco(){ return !$this->isAro();}
+    public function isAco(){ return $this->_type == 'Aco';}
     
     /**
      * Overwrite this method to return the actual class Name
@@ -45,7 +45,12 @@ abstract class AclObjectBehavior extends CActiveRecordBehavior{
      */
     protected function loadObject(){
         $type = ($this->_type !== NULL) ? $this->_type : $this->getType();
-       return $this->_obj = AclObject::loadObjectStatic($this->getOwner(), $type);
+        $this->_obj = AclObject::loadObjectStatic($this->getOwner(), $type);
+        
+        if(!$this->_obj)
+            throw new RuntimeException(Yii::t('acl', 'Unable to load aro object'));
+        
+        return $this->_obj;
     }
     
     /**
@@ -103,38 +108,81 @@ abstract class AclObjectBehavior extends CActiveRecordBehavior{
      protected function performAutoJoins(){
          $owner = $this->getOwner();
          $identifiers = $this->getAutoJoins($owner);
-         
-         foreach($identifiers as $identifier){
+
+         foreach($identifiers as $type => $joins){
              
-             //Bypass any checks
-             if(!$owner->join($identifier, true))
-                     throw new RuntimeException('Unable to join group');
+             //Assure that the object chooses the right type
+             $method = 'be'.ucfirst($type);
+             $owner->$method();
+             foreach($joins as $join){
+                //Bypass any checks
+                if(!$owner->join($join, true))
+                        throw new RuntimeException('Unable to join group');
+             }
          }
      }
      
      /**
       * Returns a list of identifiers to join for the given object
       * @param CActiveRecord    $obj  the object to fetch the autojoins for
-      * @return array   an array of identifiers to join
+      * @return array   an array('aro' => ..., 'aco'=>...) of identifiers to join
       */
      protected function getAutoJoins($obj){
-         
          $identifiers = array();
-         $type        = lcfirst($this->getType());
          
-         //Fetch the general config first
-         $joins         = Strategy::get('autoJoinGroups');
-         $identifiers   = isset($joins[$type]) ? $joins[$type] : array();  
-         
-         //Now, let's look if it has been overwritten
-         if($obj instanceof CActiveRecord){
-             $class = get_class($obj);
-             
-             if(isset($class::$autoJoinGroups))
-                 $identifiers = $class::$autoJoinGroups;
+         foreach($this->getTypes() as $type){
+            //Fetch the general config first
+            $generalJoins         = Strategy::get('autoJoinGroups');
+            $joins   = isset($generalJoins[$type]) ? $generalJoins[$type] : array();  
+
+            //Now, let's look if it has been overwritten on a per class basis
+            if($obj instanceof CActiveRecord){
+                $class = get_class($obj);
+
+                if(isset($class::$autoJoinGroups) 
+                   && isset($class::$autoJoinGroups[$type]))
+                    $joins = $class::$autoJoinGroups[$type];
+            }
+            $identifiers[$type] = $joins;
          }
+            return $identifiers; 
+     }
+     
+     /**
+      * Sets the given type
+      * @param string $type (either "Aro" or "Aco")
+      * @param boolean $recursive if true, will set the type on all other behaviors too
+      */
+     protected function setType($type, $recursive = false){
+         $this->_type = $type;
+         if(!$recursive)
+             return true;
          
-         return $identifiers;
+         $owner = $this->getOwner();
+         $aroBehavior = $owner->asa('aro');
+         $acoBehavior = $owner->asa('aco');
+         
+         if($aroBehavior && $aroBehavior != $this)
+             $aroBehavior->setType($type);
+         if($acoBehavior && $acoBehavior != $this)
+             $acoBehavior->setType($type);
+     }
+     
+     /**
+      * Returns an array containing all behaviors the owner of this behavior
+      * can assume.
+      * That are:
+      * @return array array('aro'), array('aro', 'aco'), array('aco')
+      */
+     protected function getTypes(){
+         $types = array();
+         $owner = $this->getOwner();
+         if($owner->asa('aro'))
+             $types[] = 'aro';
+         if($owner->asa('aco'))
+             $types[] = 'aco';
+         
+         return $types;
      }
     
 }

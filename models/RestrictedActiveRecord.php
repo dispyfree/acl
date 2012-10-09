@@ -339,9 +339,12 @@ abstract class RestrictedActiveRecord extends CActiveRecord {
      * @see "enableGeneralPermissions" config.php of the currenctly active strategy
      * @param mixed $aco the object to perform the action on (either a string or a class)
      * @param mixed $perm´the permission to perform
+     * @param AclObject $aro the aro object trying to perform this action
      */
-    public static function mayGenerally($aco, $perm) {
-
+    public static function mayGenerally($aco, $perm, $aro = NULL) {
+        if($aro === NULL)
+            $aro = self::getUser();
+        
         // These ultra general permissions are not affected by the flag below
         $perm = Action::translateActions($aco, $perm);
         //If the permission is generally granted on all objects
@@ -369,7 +372,7 @@ abstract class RestrictedActiveRecord extends CActiveRecord {
                 $aco = get_class($aco);
             else
                 throw new RuntimeException('Invalid Aco-Argument');
-            return self::getUser()->may($aco, $perm);
+            return $aro->may($aco, $perm);
         }
     }
 

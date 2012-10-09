@@ -41,8 +41,8 @@ class PmAro extends PmAclObject
             $this->checkPermissionChange ('grant', $obj, $actions);
         
         //Load all nodes of this object
-        $aroNodes = $this->getNodes();
-        $acoNodes = $obj->getNodes();
+        $aroNodes = $this->getNodes(true);
+        $acoNodes = $obj->getNodes(true);
         
         foreach($actions as $action){
             //First check: does that already exist?
@@ -95,6 +95,7 @@ class PmAro extends PmAclObject
         if(!$byPassCheck)
             $this->checkPermissionChange('deny', $obj, $actions);
         
+        //We don't need explicit write access here as permissions do already have nodes
         $aroNodes = $this->getNodes();
         $acoNodes = $obj->getNodes();
         
@@ -203,7 +204,7 @@ class PmAro extends PmAclObject
                             .get_class($obj));
             
             //Perform general check
-            if(RestrictedActiveRecord::mayGenerally($originalObj, $action))
+            if(RestrictedActiveRecord::mayGenerally($originalObj, $action, $this))
                 return true;
         
         

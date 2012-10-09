@@ -37,38 +37,45 @@ class Issue_3_Test extends CTestCase
             ),
             'RGroup' => array(
                 'Admin',
-                'SuperAdmin',
-                'User'
+                'SuperAdmin'
             )
         );
+        
+       Strategy::set('autoJoinGroups', array('aro' => array(), 'aco' => array()));
         
         foreach($objects as $type => $arr){
             foreach($arr as $alias){
                 $$alias = new $type;
-                if(isset($$alias->alias))
-                    $$alias->alias = $$alias;
+                
+                if(in_array($type, array('RGroup', 'CGroup')))
+                    $$alias->alias = $alias;
+                
                 $this->assertTrue($$alias->save());
             }
         }
-        
+
         /**
          * Build hierarchy 
          */
         $this->assertTrue($SuperAdmin->join('Admin'));
-        $this->assertTrue($Admin->join('User'));
+        $this->assertTrue($Admin->join('testUser'));
+        $SuperUser->beAro();
         $this->assertTrue($SuperUser->join('SuperAdmin'));
         
-        
-        $SuperUser->grant('User', '*');
-        $SuperUser->grant('Person', '*');
-        $SuperUser->grant($SuperUser, 'read,update');
-        $SuperUser->grant($PersonA, 'read,update');
+
+        $SuperUser->grant('testUser', '*');
+        $SuperUser->grant('testPerson', '*');
+
+        //$SuperUser->grant($SuperUser, 'read,update');
+       // $SuperUser->grant($PersonA, 'read,update');
         
         //Crucial part
         $Test = new RGroup();
         $Test->alias = 'Test';
         $this->assertTrue($Test->save());
         
+
+        $SuperUser->beAro();
         $this->assertTrue($SuperUser->join('Test'));
 
         /**
@@ -78,6 +85,8 @@ class Issue_3_Test extends CTestCase
             foreach($arr as $obj)
                 $this->assertTrue($$obj->delete()); 
          $this->assertTrue($Test->delete());
+         
+         Strategy::resetConfig();
     }
             
 }

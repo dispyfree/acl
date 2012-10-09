@@ -26,6 +26,7 @@ abstract class AclNode extends CActiveRecord{
                     $this->takeOverPermissions($node);
                     $this->takeOverSubTree($node);
             }
+           
         }
     }
     

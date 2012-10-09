@@ -46,9 +46,16 @@ abstract class PmAclNode extends AclNode{
      */
     protected function takeOverPermissions($node){
         foreach($node->permissions as $permission){
-            $permission = clone $permission;
-            $permission->aco_id     = $this->id;
-            $permission->aco_path   = $this->path;
+            $permission = $permission->cloneObj();
+            
+            /**
+             * Depending on the object type, we must overwrite one part or
+             * the other one 
+             */
+            $type = Util::getDataBaseType($this);
+            
+            $permission->{$type.'_id'}    = $this->id;
+            $permission->{$type.'_path'}   = $this->path;
             if(!$permission->save())
                 throw new RuntimeException('Unable to clone permission');
         }

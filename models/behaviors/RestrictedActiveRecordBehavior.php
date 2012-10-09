@@ -478,14 +478,25 @@ class RestrictedActiveRecordBehavior extends AclObjectBehavior {
 
         //If there's no aro, don't assign any rights
         if ($aro === NULL)
-            return true;
+            return parent::beforeSave($event);
 
         if (!$this->getOwner()->isNewRecord) {
-            if (!$aro->may($this->getOwner(), 'update'))
+            if (!$this->getOwner()->grants('update'))
                 throw new RuntimeException('You are not allowed to update this record');
         }
         else {
-            if (!$aro->may(get_class($this->getOwner()), 'create'))
+            /**
+             * create permissions are always general, of course
+             * If we called may() directly, acl would try to load the object and
+             * fail consequently because it does not exist yet. 
+             * This way we check the general permissions directly 
+             */
+            $action = Util::enableCaching(Action::model(), 'action')
+                    ->find('name = :name', array(':name' => 'create'));       
+            if($action === NULL)
+                throw new RuntimeException('No create action specified');
+            
+            if (!RestrictedActiveRecord::mayGenerally($this->getOwner(), $action))
                 throw new RuntimeException('You are not allowed to create this object');
         }
 
@@ -528,18 +539,20 @@ class RestrictedActiveRecordBehavior extends AclObjectBehavior {
         $owner = $this->getOwner();
         if ($owner->isNewRecord) {
             $aro = RestrictedActiveRecord::getUser();
-            //As the object is newly created, it needs a representation
-            //If strict mode is disabled, this is not necessary
-            $class = Strategy::getClass('Aco');
-            $aco = new $class();
-            $aco->model = get_class($owner);
-            $aco->foreign_key = $owner->getPrimaryKey();
+            /**
+             * Take care that an acl object is created
+             * If it has already been created (some internals, joins whatever),
+             * this won't lead to an error  
+             */
+            $identifier = array(
+              'model' => get_class($owner),
+              'foreign_key' => $owner->getPrimaryKey()
+            );
+            $obj = AclObject::loadObjectStatic($identifier, 'Aco');
+            if(!$obj)
+                throw new RuntimeException("Unable to save aco collection");
 
-            if (!$aco->save()) {
-                throw new RuntimeException('Unable to create corresponding Aco for new ' . get_class($owner));
-            }
-
-            $aro->grant($aco, RestrictedActiveRecord::getAutoPermissions($this->getOwner()), true);
+            $aro->grant($obj, RestrictedActiveRecord::getAutoPermissions($this->getOwner()), true);
         }
         
         return parent::afterSave($event);

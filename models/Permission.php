@@ -111,9 +111,20 @@ class Permission extends CActiveRecord
      * Clones the object - resets the ID so that it is in fact a new object 
      * in the database also
      */
-    public function __clone(){
-        $this->id = NULL;
-        $this->isNewRecord = true;
+    public function cloneObj(){
+        $class = get_class($this);
+        $clone = new $class;
+        
+        $clone->setAttributes(array(
+                'id'        => NULL,
+                'aco_id'    => $this->aco_id,
+                'aco_path'  => $this->aco_path,
+                'aro_id'    => $this->aro_id,
+                'aro_path'  => $this->aro_path,
+                'action_id' => $this->action_id
+                ), false);
+        
+        return $clone;
     }
 } 
 

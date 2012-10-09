@@ -12,8 +12,8 @@
 class testPerson extends CActiveRecord{
     public function behaviors(){
             return array(
-              //'aro'  => 'acl.models.behaviors.RestrictedActiveRecordBehavior',
-              'aco'  => 'acl.models.behaviors.RequestingActiveRecordBehavior'
+              'aco'  => 'acl.models.behaviors.RestrictedActiveRecordBehavior',
+              //'aro'  => 'acl.models.behaviors.RequestingActiveRecordBehavior'
             );
      }
      

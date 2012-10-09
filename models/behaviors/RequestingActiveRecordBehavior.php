@@ -72,12 +72,18 @@ class RequestingActiveRecordBehavior extends AclObjectBehavior{
     public function afterSave($event){
         $owner = $this->getOwner();
         if($owner->isNewRecord){
-            $class = Strategy::getClass('Aro');
-            $aro = new $class();
-            $aro->model = get_class($owner);
-            $aro->foreign_key = $owner->getPrimaryKey();
-            if(!$aro->save())
-                throw new RuntimeException("Unable to save Aro-Collection");
+            /**
+             * Take care that an acl object is created
+             * If it has already been created (some internals, joins whatever),
+             * this won't lead to an error  
+             */
+            $identifier = array(
+              'model' => get_class($owner),
+              'foreign_key' => $owner->getPrimaryKey()
+            );
+            $obj = AclObject::loadObjectStatic($identifier, 'Aro');
+            if(!$obj)
+                throw new RuntimeException("Unable to save aro collection");
         }
         
         parent::afterSave($event);
@@ -112,6 +118,8 @@ class RequestingActiveRecordBehavior extends AclObjectBehavior{
             $transaction->rollback();
             throw $e;
         }
+        
+        return parent::beforeDelete($event);
         
     }
     

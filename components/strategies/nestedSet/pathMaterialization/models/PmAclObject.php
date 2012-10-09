@@ -93,6 +93,14 @@ abstract class PmAclObject extends AclObject{
      * @return string the finished SQL-statement
      */
     public function addPositionCheck($positions, $type, $table = 't', $dir = 'asc', $fieldPostfix = '_path'){
+        /**
+         * Special case: the positions can be empty (== the object does not have
+         * any nodes yet). In this case, the condition fails always 
+         */
+        if(count($positions) == 0)
+            return ' False ';
+        
+
         //Positions == paths in this case
         $preparedConditions = ' ( ';
         
@@ -152,15 +160,15 @@ abstract class PmAclObject extends AclObject{
      *
      * @access public
      * @param  AclObject child
-     * @param  Integer
+     * @param  boolean $writeAccess  whether the caller wants to perform write operations
      * @return array[AclNode]
      */
-    public function getDirectChildNodes(AclObject $child = NULL){
+    public function getDirectChildNodes(AclObject $child = NULL, $writeAccess = false){
         $nodeName   = Util::getNodeNameOfObject($this);
         $type       = Util::getDataBaseType($this);
         
         //It's easy: fetch all nodes and get the paths their childs will have
-        $nodes = $this->getNOdes();
+        $nodes = $this->getNodes($writeAccess);
         $resPaths = array();
         
         foreach($nodes as $node){
@@ -240,14 +248,11 @@ abstract class PmAclObject extends AclObject{
                 throw new RuntimeException('Unable to delete '.$this->getType().'::'.$node->id);
         }
         
-        if(!$nodes)
-            throw new RuntimeException('Unable to delete nodes of '.$this->getType().'::'.$this->id);
-        
         //Finally, delete all associated permissions
         if(PmPermission::deleteByObject($this, $paths) === false)
                 throw new RuntimeException('Unable to delete associated permissions of '.$this->id);
         
-        return $nodes && parent::beforeDelete();
+        return  parent::beforeDelete();
      }
      
      /**
@@ -271,7 +276,7 @@ abstract class PmAclObject extends AclObject{
             $this->checkRelationChange('join', $obj);
          
          //Get all nodes of the object
-         $objNodes = $obj->getNodes();
+         $objNodes = $obj->getNodes(true);
          
          $transaction = Yii::app()->db->beginTransaction();
          try{

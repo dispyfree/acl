@@ -59,6 +59,13 @@ class PmPathManager {
      * @return string   the condition 
      */
     public static function buildMultiplePathCondition($field, $paths, $additionalCondition = ''){
+        /**
+         * Caveat: if there are no paths, there's nothing to match
+         * => always false 
+         */
+        if(count($paths) == 0)
+            return ' False ';
+        
         $condition = ' ( ';
         
         foreach($paths as $index => $path){

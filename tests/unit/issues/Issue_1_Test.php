@@ -41,7 +41,7 @@ class Issue_1_Test extends CTestCase
          */
         $this->assertTrue($superUser->is('superAdmin'));
         $this->assertTrue($superAdmin->is('admin'));
-        $this->assertTrue($admin->is('user'));
+        $this->assertTrue($admin->is('User'));
 
         $superAdmin->leave('Admin');
       
@@ -53,9 +53,9 @@ class Issue_1_Test extends CTestCase
          * admin is child of User
          */
         $this->assertTrue($superUser->is('superAdmin'));
-        $this->assertFalse($superAdmin->is('admin'));
-        $this->assertFalse($superUser->is('user'));
-        $this->assertTrue($admin->is('user'));
+        $this->assertFalse($superAdmin->is('Admin'));
+        $this->assertFalse($superUser->is('User'));
+        $this->assertTrue($admin->is('User'));
         
         //Remove objects from database
         foreach($objects as $name => $alias){

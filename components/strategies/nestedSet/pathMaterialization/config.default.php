@@ -54,7 +54,7 @@ return array(
     /**
      * Enables the business rules for all actions (automatical lookup) _except_ the read-action
      */
-    'enableBusinessRules' => true,
+    'enableBusinessRules' => false,
     
     /**
      * Sets the direction in which business-rules are applied. Default is to check

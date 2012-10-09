@@ -107,10 +107,11 @@ abstract class AclObject extends CActiveRecord{
     
     /**
      * Fetches all child-objects and returns them in an array
+     * @param  boolean $writeAccess  whether the caller wants to perform write operations
      * @return array[AclObject] the child-objects 
      */
-    public function getChildObjects(){
-        $childNodes = $this->getDirectChildNodes(NULL);
+    public function getChildObjects($writeAccess = false){
+        $childNodes = $this->getDirectChildNodes(NULL, $writeAccess);
         $objects = array();
         
         $type = Util::getDataBaseType($this);
@@ -327,12 +328,22 @@ abstract class AclObject extends CActiveRecord{
      *
      * @access public
      * @param  AclObject object
+     * @param  boolean $writeAccess  whether the caller wants to perform write operations
      * @return array[AclNode]
      */
-    public function getNodes(){
+    public function getNodes($writeAccess = false){
         $class = Util::getNodeNameOfObject($this);
         
-        return Util::enableCaching($class::model(), 'structureCache')->findAll('collection_id = :id', array(':id' => $this->id));
+        $nodes = Util::enableCaching($class::model(), 'structureCache')->findAll('collection_id = :id', array(':id' => $this->id));
+        
+        /**
+         * If the calling method intents to write on the nodes of this object
+         * (joins, grants...), we need to provide at least one node.
+         */
+        if(count($nodes) == 0 && $writeAccess)
+            $nodes[] = $this->createNode();
+        
+        return $nodes;
     }
     
     /**
@@ -342,7 +353,10 @@ abstract class AclObject extends CActiveRecord{
          
          //If we're new here, we also need a new node for the permissions :)
          if($this->isNewRecord){
-            $this->createNode();
+             
+             //@todo: test if this is safe
+             //remove initial node => only needed nodes are created
+           // $this->createNode();
              
              Util::flushCache();
          }
