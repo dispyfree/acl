@@ -273,6 +273,9 @@ class RestrictedActiveRecordBehavior extends AclObjectBehavior {
 
         //Processed => remove
         $relevantCriteria = array();
+        
+        //Necessary to avoid doubled records
+        $currentCriteria->distinct = true;
 
         //The programmer doesn't have to bother with the unique tables
         $currentCriteria = $this->translatePlaceholders($currentCriteria);

@@ -55,7 +55,7 @@ abstract class PmAclNode extends AclNode{
             $type = Util::getDataBaseType($this);
             
             $permission->{$type.'_id'}    = $this->id;
-            $permission->{$type.'_path'}   = $this->path;
+            $permission->{$type.'_path'}   = PmPathManager::appendToPath($this->path, $this->id);
             if(!$permission->save())
                 throw new RuntimeException('Unable to clone permission');
         }

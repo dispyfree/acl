@@ -116,7 +116,57 @@ return array(
     'autoJoinGroups' => array(
         'aro' => array('All'),
         'aco' => array('All')
-    )
+    ),
+    
+    'caching' => array(
+      /**
+       *  If enabled, the given number defines the number of seconds after which 
+       * the cached values are invalidated. A value of 0 indicates that caching is disabled.
+       */
+        
+      /**
+       * The acl objects themselves are cached 
+       */
+      'collection' => 0,
+        
+      /**
+        * The actions are cached
+        */
+      'action'     => 0,
+        
+       /**
+        * The permissions are cached
+        * Note that this does only apply for all checks where may() is involved. -
+        * This is the case whenever you call it, or for the general permissions
+        * Note: the regular find() method is _not_ affected unless you use
+        * general permissions 
+        */
+      'permission' => 0,
+        
+      /**
+       * This caches the objects associated with the acl objects (above: the collections)
+       * This cache affects the REAL objects whenever this extension accesses them 
+       */
+      'aclObject' => 0,
+        
+      /**
+       * Caches _only_ the objects used as the _current_ aro - not aros in general
+       * if you do not enable this, the aro will be requested every single time from your database
+       * whenever you do something with acl
+       */
+      'aroObject' => 0,
+        
+      /**
+       * caches the structures of objects, e.g.:
+       * relations (parent, child) and paths
+       */
+      'structureCache' => 0,
+        
+       /**
+        * Allows you to use another cache component than the default one, solely for acl 
+        */
+      'cacheComponent' => 'cache'
+    ),
 );
 
 ?>
