@@ -43,7 +43,7 @@ class RestrictedTreeActiveRecordBehavior extends CActiveRecordBehavior{
             //First: find the aco-Object of yourself
             $aco = AclObject::loadObjectsStatic(array(
                 'model'         => get_class($this->getOwner()),
-                'foreign_key'   => $this->getOwner()->id
+                'foreign_key'   => $this->getOwner()->getPrimaryKey()
             ), 'Aco', true);
             
              $aco2 = $acoClass->loadObject(

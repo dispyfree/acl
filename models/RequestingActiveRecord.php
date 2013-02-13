@@ -27,7 +27,7 @@ class RequestingActiveRecord extends CActiveRecord{
         
         if($this->aro === NULL){
             $this->aro = Util::enableCaching($class::model(), 'aroObject')->find('model = :model AND foreign_key = :foreign_key', 
-                    array(':model' => get_class($this), 'foreign_key' => $this->id));
+                    array(':model' => get_class($this), 'foreign_key' => $this->getPrimaryKey()));
             
             //If there's no such Aro-Collection... use Guest ^^
             $guest = Strategy::get('guestGroup');
@@ -103,7 +103,7 @@ class RequestingActiveRecord extends CActiveRecord{
     public function beforeDelete(){
         //Ok he has the right to do that - remove all the ACL-objects associated with this object
         $class = Strategy::getClass('Aro');
-        $aro = $class::model()->find('model = :model AND foreign_key = :key', array(':model' => get_class(          $this), ':key' => $this->id));
+        $aro = $class::model()->find('model = :model AND foreign_key = :key', array(':model' => get_class(          $this), ':key' => $this->getPrimaryKey()));
         
         if(!$aro)
             throw new RuntimeException('No associated Aro-Collection!');

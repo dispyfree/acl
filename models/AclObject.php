@@ -118,7 +118,7 @@ abstract class AclObject extends CActiveRecord{
         foreach($childNodes as $node){
             $obj = $node->{$type};
             //Why this way? Several nodes may be associated to the same object
-            $objects[$obj->id] = $obj;
+            $objects[$obj->getPrimaryKey()] = $obj;
         }
         
         return $objects;
@@ -136,7 +136,7 @@ abstract class AclObject extends CActiveRecord{
         foreach($parentNodes as $node){
             $obj = $node->{$type};
             //Why this way? Several nodes may be associated to the same object
-            $objects[$obj->id] = $obj;
+            $objects[$obj->getPrimaryKey()] = $obj;
         }
         
         return $objects;
@@ -305,7 +305,7 @@ abstract class AclObject extends CActiveRecord{
                         return self::loadObjectsStatic($newObjects, $model, $onlyFirst);
                     //Okay - use the bare acl object
                     else{
-                        $identifier = array('model' => $realType, 'foreign_key' => $objects->id);
+                        $identifier = array('model' => $realType, 'foreign_key' => $objects->getPrimaryKey());
                         return self::loadObjectsStatic($identifier, $model, $onlyFirst);
                     }
                 }
@@ -314,7 +314,7 @@ abstract class AclObject extends CActiveRecord{
             return $objects;
         }
         elseif(is_a($identifier, "CActiveRecord")){
-            return self::loadObjectsStatic( array('model' => get_class($identifier), 'foreign_key' => $identifier->id), $model, $onlyFirst);
+            return self::loadObjectsStatic( array('model' => get_class($identifier), 'foreign_key' => $identifier->getPrimaryKey()), $model, $onlyFirst);
         }
         else{
             throw new Exception('Unknown ACL-Object specification');
@@ -334,7 +334,7 @@ abstract class AclObject extends CActiveRecord{
     public function getNodes($writeAccess = false){
         $class = Util::getNodeNameOfObject($this);
         
-        $nodes = Util::enableCaching($class::model(), 'structureCache')->findAll('collection_id = :id', array(':id' => $this->id));
+        $nodes = Util::enableCaching($class::model(), 'structureCache')->findAll('collection_id = :id', array(':id' => $this->getPrimaryKey()));
         
         /**
          * If the calling method intents to write on the nodes of this object

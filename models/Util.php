@@ -91,7 +91,7 @@ class Util {
     public static function getIdsOfObjects($objects){
         $ret = array();
         foreach($objects as $obj){
-            $ret[] = $obj->id;
+            $ret[] = $obj->getPrimaryKey();
         }
         return $ret;
     }

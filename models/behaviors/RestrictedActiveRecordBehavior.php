@@ -523,7 +523,7 @@ class RestrictedActiveRecordBehavior extends AclObjectBehavior {
 
         //Ok he has the right to do that - remove all the ACL-objects associated with this object
         $class = Strategy::getClass('Aco');
-        $aco = $class::model()->find('model = :model AND foreign_key = :key', array(':model' => get_class($owner), ':key' => $owner->id));
+        $aco = $class::model()->find('model = :model AND foreign_key = :key', array(':model' => get_class($owner), ':key' => $owner->getPrimaryKey()));
         if (!$aco)
             throw new RuntimeException('No associated Aco!');
 

@@ -103,7 +103,7 @@ class RequestingActiveRecordBehavior extends AclObjectBehavior{
         $owner = $this->getOwner();
         //Ok he has the right to do that - remove all the ACL-objects associated with this object
         $class = Strategy::getClass('Aro');
-        $aro = $class::model()->find('model = :model AND foreign_key = :key', array(':model' => get_class($owner), ':key' => $owner->id));
+        $aro = $class::model()->find('model = :model AND foreign_key = :key', array(':model' => get_class($owner), ':key' => $owner->getPrimaryKey()));
         
         if(!$aro)
             throw new RuntimeException('No associated Aro-Collection!');
