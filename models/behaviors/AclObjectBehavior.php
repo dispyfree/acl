@@ -54,6 +54,32 @@ abstract class AclObjectBehavior extends CActiveRecordBehavior{
     }
     
     /**
+     * Loads all (direct) parent objects
+     * @param   boolean $convert  whether to convert parent objects back 
+     * to any associated real world entities, if they exist. 
+     * Take heed: it can occur that in the result set, acl objects and real 
+     * world entities are mixed. 
+     * It is the caller's responsibility to avoid endless recursion if nodes are
+     * self-referencing (acl won't care).
+     * @see getParentAroObjects
+     * @see getParentAcoObjects
+     * @return type
+     */
+    function getParentObjects($convert = false)
+    {
+        //chooses type automatically
+        $this->loadObject();
+        
+        $objects = $this->_obj->getParentObjects();
+        
+        if(!$convert)
+            return $objects;
+        
+        //Otherwise try to convert them and fall back in case there is no associated entity
+        return array_map(array('Util', 'getByIdentifierGraceful'), $objects);
+    }
+    
+    /**
       * Joins the given object (now called: group)
       * @param mixed $obj
       * @return boolean

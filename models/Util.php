@@ -120,8 +120,12 @@ class Util {
      * @return mixed 
      */
     public static function getByIdentifierGraceful($identifier){
-        //If this is already the desired instance
-        if($identifier instanceof CActiveRecord)
+        /**
+         * If this is already the desired instance
+         * Aros/Acos are also CActiveRecords, nevertheless they are not what we want here
+         */
+        if(($identifier instanceof CActiveRecord) 
+                && !($identifier instanceof AclObject))
             return $identifier;
         
         $res = self::getByidentifier($identifier);

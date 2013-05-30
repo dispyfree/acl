@@ -59,6 +59,7 @@ abstract class RestrictedTreeActiveRecord extends RestrictedActiveRecord{
         
         return true;
     }
+    
 }
 
 ?>

@@ -123,5 +123,25 @@ class RequestingActiveRecordBehavior extends AclObjectBehavior{
         
     }
     
+    /**
+     * Loads all (direct) parent objects
+     * @param   boolean $convert  whether to convert parent objects back 
+     * to any associated real world entities, if they exist. 
+     * Take heed: it can occur that in the result set, acl objects and real 
+     * world entities are mixed. 
+     * It is the caller's responsibility to avoid endless recursion if nodes are
+     * self-referencing (acl won't care).
+     * @see getParentAroObjects
+     * @see getParentAcoObjects
+     * @return type
+     */
+    function getParentAroObjects($convert = false)
+    {
+        $this->beAro();
+        $this->loadObject();
+        
+        return $this->getParentObjects($convert);
+    }
+    
 }
 ?>
