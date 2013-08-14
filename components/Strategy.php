@@ -17,12 +17,14 @@ class Strategy {
       */
      public static $strategy = 'nestedSet.pathMaterialization';
      
+
      protected static $initialized = false;
      
      /**
       * Assuming you put it there... change it otherwise ^^
       * @var string 
       */
+     protected static $moduleName = 'acl';
      protected static $location = 'application.modules.acl';
      protected static $config   = NULL;
      protected static $configBackup = NULL;
@@ -30,11 +32,29 @@ class Strategy {
      public static function initialize(){
          if(!static::$initialized){
              static::$initialized = true;
+             
+             //Try to get configuration out of the module configuration
+             $module = Yii::app()->getModule(static::$moduleName);
+             if ($module) {
+                $strategy = $module->strategy;
+                if (is_string($strategy)) {
+                    static::$strategy = $strategy;
+                }
+                $strategy_config = $module->strategy_config;
+             } else {
+                $strategy_config = NULL;
+             }
+
              $strategyPath = static::$location.'.components.strategies.'.static::$strategy;
              Yii::import($strategyPath.'.*');
              Yii::import($strategyPath.'.models.*');
-             $config = require_once(Yii::getPathOfAlias($strategyPath.'.config').'.php');
-             
+            
+             if (is_array($strategy_config) && !empty($strategy_config)) {
+                 $config = $strategy_config;
+             } else {
+                 $config = require_once(Yii::getPathOfAlias($strategyPath.'.config').'.php');
+             }
+                          
              if(!$config)
                  throw new RuntimeException('Unable to load configuration');
              
