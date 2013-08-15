@@ -2,6 +2,20 @@
 
 class AclModule extends CWebModule
 {
+
+        /**
+         * @var stategy
+         * @desc The strategy to be used
+         */
+        public $strategy = "nestedSet.pathMaterialization";
+        
+        /**
+         * @var stategy_config
+         * @desc Configuration of strategies - for details about the configuration look at the specific strategy 
+         *       (ex. components/strategies/nestedSet/pathMaterialization)
+         */
+        public $strategy_config = array();
+
         // getAssetsUrl()
         //    return the URL for this module's assets, performing the publish operation
         //    the first time, and caching the result for subsequent use.
